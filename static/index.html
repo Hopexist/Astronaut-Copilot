@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Astronaut Copilot</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #0b1020; color: #e6ecff; max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
+    h1 { font-size: 1.4rem; }
+    form { display: flex; gap: .5rem; }
+    input { flex: 1; padding: .6rem; border-radius: 6px; border: 1px solid #334; background: #141a30; color: inherit; }
+    button { padding: .6rem 1rem; border: 0; border-radius: 6px; background: #4f7cff; color: #fff; cursor: pointer; }
+    #answer { margin-top: 1rem; padding: 1rem; background: #141a30; border-radius: 6px; min-height: 3rem; white-space: pre-wrap; }
+    pre { background: #141a30; padding: 1rem; border-radius: 6px; overflow: auto; font-size: .8rem; }
+  </style>
+</head>
+<body>
+  <h1>Astronaut Copilot</h1>
+  <form id="form">
+    <input id="q" placeholder="Ask about the mission, e.g. How is the cabin air?" autocomplete="off" required>
+    <button id="mic" type="button" title="Speak">Mic</button>
+    <button type="submit">Ask</button>
+  </form>
+  <div id="answer"></div>
+  <h2>Telemetry</h2>
+  <pre id="telemetry">loading...</pre>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    fetch("/api/telemetry").then(r => r.json()).then(t => {
+      $("telemetry").textContent = JSON.stringify(t, null, 2);
+    });
+
+    async function ask(question) {
+      $("answer").textContent = "Thinking...";
+      try {
+        const res = await fetch("/api/ask", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question }),
+        });
+        const data = await res.json();
+        if (data.error) { $("answer").textContent = data.error; return; }
+        $("answer").textContent = data.answer;
+        if (data.audio) new Audio("data:audio/mpeg;base64," + data.audio).play();
+      } catch (e) {
+        $("answer").textContent = "Request failed: " + e;
+      }
+    }
+
+    $("form").addEventListener("submit", (e) => { e.preventDefault(); ask($("q").value); });
+
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SR) {
+      const rec = new SR();
+      rec.onresult = (e) => { $("q").value = e.results[0][0].transcript; ask($("q").value); };
+      $("mic").addEventListener("click", () => rec.start());
+    } else {
+      $("mic").style.display = "none";
+    }
+  </script>
+</body>
+</html>

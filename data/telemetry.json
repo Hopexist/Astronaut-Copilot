@@ -1,0 +1,13 @@
+{
+  "mission": "Artemis Sim-7",
+  "mission_elapsed_time": "03:14:22",
+  "crew": 4,
+  "cabin": {"pressure_kpa": 101.2, "o2_percent": 20.8, "co2_ppm": 1150, "temp_c": 22.4, "humidity_percent": 41},
+  "power": {"battery_percent": 78, "solar_output_kw": 5.9, "load_kw": 4.7},
+  "propulsion": {"fuel_percent": 64, "engine_status": "idle"},
+  "thermal": {"radiator_temp_c": -12.5, "coolant_loop_status": "nominal"},
+  "navigation": {"altitude_km": 384400, "velocity_kms": 1.02, "next_burn_in": "01:45:00"},
+  "alerts": [
+    {"level": "warning", "system": "cabin", "message": "CO2 scrubber B efficiency at 82%"}
+  ]
+}
