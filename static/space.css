@@ -270,7 +270,7 @@ button:active:not(:disabled) { transform: scale(.97); }
   --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --glass: rgba(18, 22, 31, .55); --glass-line: rgba(255, 255, 255, .1);
   --grad: linear-gradient(90deg, #fc3d21, #ff8a4c 45%, #b9a3ff);
-  --r: 16px;
+  --r: 16px; --nav-h: 46px;
 }
 @supports not (backdrop-filter: blur(1px)) { :root { --glass: rgba(18, 22, 31, .92); } }
 body {
@@ -290,7 +290,18 @@ h1, .sec-head h2, .story h3, .hud h2 { font-family: var(--serif); }
 .brand { font-family: var(--mono); font-size: .78rem; font-weight: 700; }
 .kicker, .strip, .phase-label, .dist, .chip, .meta, .badge, .val, .ring .num b, .d-val, .part-btn .pv, .news-meta,
 .panel h2, .group h3, .eyebrow, .more-link { font-family: var(--mono); }
-#title { font-weight: 500; letter-spacing: -.035em; line-height: .92; max-width: 9ch; font-size: clamp(3.2rem, 11vw, 8rem); }
+#title { font-weight: 500; letter-spacing: -.035em; line-height: .95; max-width: none; font-size: clamp(2.6rem, 7vw, 5rem); }
+/* compact top: thinner notice and nav, shorter hero */
+#strip { padding: .2rem 1rem; font-size: .64rem; }
+#nav { min-height: 46px; padding: .2rem 1.2rem; }
+.links a { padding: .4rem .6rem; }
+#hero { min-height: 0; padding: 2rem 1.2rem 2rem; gap: .7rem; }
+.tagline { font-size: clamp(.95rem, 1.8vw, 1.1rem); max-width: 460px; }
+.rings { margin-top: .3rem; gap: clamp(.8rem, 3vw, 1.6rem); }
+.ring { width: clamp(70px, 18vw, 86px); }
+.ring .num b { font-size: clamp(.95rem, 2.6vw, 1.15rem); }
+.ctas { margin-top: .2rem; } .ctas button { padding: .65rem 1.3rem; font-size: .88rem; }
+.latest { margin-top: .5rem; padding-top: .7rem; }
 .sec-head h2 { font-weight: 500; letter-spacing: -.02em; font-size: clamp(2rem, 4.6vw, 3.3rem); line-height: 1.02; }
 .sec-head { border-bottom-color: var(--glass-line); padding-bottom: 1.2rem; }
 main { counter-reset: sec; overflow-x: clip; }
@@ -325,7 +336,7 @@ input[type=text], select { border-radius: 10px; border-color: var(--glass-line);
 #q { border-radius: 999px; padding-left: 1rem; }
 
 /* hero: planet and orbit behind the title */
-#hero { isolation: isolate; --pw: min(46vw, 500px); --rw: calc(var(--pw) * 1.55); }
+#hero { isolation: isolate; --pw: min(32vw, 330px); --rw: calc(var(--pw) * 1.55); }
 #hero::before, #hero::after { content: ""; position: absolute; z-index: -1; top: 50%; pointer-events: none; }
 #hero::before { width: var(--rw); height: calc(var(--rw) * .26); right: calc(-2% - (var(--rw) - var(--pw)) / 2); translate: 0 -50%; rotate: -14deg; border: 1px solid rgba(255, 255, 255, .16); border-radius: 50%; }
 #hero::after {

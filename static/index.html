@@ -585,24 +585,37 @@
     };
     const micStatus = (text) => { $("micStatus").textContent = text; };
 
+    const micFail = (text) => { micStatus(text); addMsg("system", text); };
+    const MIC_ERRORS = {
+      NotAllowedError: "Microphone is blocked. Click the lock icon in the address bar, allow the microphone, and reload. In Brave also check Shields. Or type instead.",
+      NotFoundError: "No microphone was found. Plug one in, or type instead.",
+      NotReadableError: "The microphone is in use by another app. Close it and try again, or type instead.",
+    };
+
     async function startRecording() {
+      if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+        throw Object.assign(new Error("unsupported"), { name: "Unsupported" });
+      }
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const chunks = [];
-      recorder = new MediaRecorder(stream);
-      recorder.ondataavailable = (e) => chunks.push(e.data);
+      const mimeType = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"].find((t) => MediaRecorder.isTypeSupported(t));
+      const chunks = [], began = Date.now();
+      recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      recorder.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
       recorder.onstop = async () => {
         stream.getTracks().forEach((t) => t.stop());
+        const type = recorder.mimeType;
         recorder = null;
         setMic("Mic", false);
+        if (Date.now() - began < 600 || !chunks.length) { micFail("That was too short. Press Mic, speak, then press Stop."); return; }
         micStatus("Transcribing...");
         try {
-          const res = await fetch("/api/transcribe", { method: "POST", body: new Blob(chunks) });
+          const res = await fetch("/api/transcribe", { method: "POST", headers: { "Content-Type": type || "application/octet-stream" }, body: new Blob(chunks, { type }) });
           const data = await res.json().catch(() => ({}));
-          if (data.error || !data.text) { micStatus(data.error || (typeof data.detail === "string" ? data.detail : "Didn't catch that. Try again.")); return; }
+          if (data.error || !data.text) { micFail(data.error || (typeof data.detail === "string" ? data.detail : "Didn't catch that. Try again.")); return; }
           micStatus("Press M to talk · Enter to send");
           ask(data.text);
         } catch (e) {
-          micStatus("Transcription request failed: " + e);
+          micFail("Transcription request failed: " + e);
         }
       };
       recorder.start();
@@ -616,7 +629,7 @@
       try { await startRecording(); }
       catch (e) {
         setMic("Mic", false);
-        micStatus("Microphone unavailable (" + e.name + "). You can type instead.");
+        micFail(MIC_ERRORS[e.name] || `Recording is not available in this browser (${e.name}). Open this page in Chrome or Edge, or type instead.`);
       }
     }
     $("mic").addEventListener("click", toggleMic);
