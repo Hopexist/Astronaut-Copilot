@@ -187,7 +187,7 @@
       if (!fresh.length || !$("announce").checked || Date.now() - lastAnnounce < 30000) return;
       lastAnnounce = Date.now();
       const names = fresh.map((m) => METRICS[m][0]).join(" and ");
-      ask(`As Mission Control, briefly announce the new anomaly in ${names} to the crew.`, true, "control");
+      ask(`As Mission Control, in one sentence tell the crew what the new anomaly in ${names} is: the reading, how it deviates, and what to check. Do not raise an alarm.`, true, "control");
     }
 
     async function poll() {

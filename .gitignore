@@ -4,3 +4,4 @@
 /.env.local
 __pycache__/
 .venv/
+graphify-out/
