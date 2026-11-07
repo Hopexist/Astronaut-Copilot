@@ -116,6 +116,12 @@
             <button id="mic" type="button" class="ghost" aria-pressed="false" title="Speak (M)">Mic</button>
             <button id="ask" type="submit">Ask</button>
           </form>
+          <div class="suggest" role="group" aria-label="Suggested questions">
+            <button type="button" class="ghost" data-q="What's our status?">What's our status?</button>
+            <button type="button" class="ghost" data-q="Any anomalies?">Any anomalies?</button>
+            <button type="button" class="ghost" data-q="How is the cabin air?">Cabin air</button>
+            <button type="button" class="ghost" data-q="What is the latest on Artemis III?">Latest on Artemis III</button>
+          </div>
           <div class="hint" id="micStatus" aria-live="polite">Press M to talk · Enter to send</div>
           <canvas id="wave" aria-hidden="true"></canvas>
           <label class="chk"><input type="checkbox" id="announce" checked> Announce new anomalies by voice</label>
@@ -633,6 +639,7 @@
       }
     }
     $("mic").addEventListener("click", toggleMic);
+    document.querySelectorAll(".suggest button").forEach((b) => b.addEventListener("click", () => { ensureAudio(); ask(b.dataset.q); }));
 
     document.addEventListener("keydown", (e) => {
       if (e.ctrlKey || e.metaKey || e.altKey || e.key.toLowerCase() !== "m") return;
