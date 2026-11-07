@@ -54,8 +54,25 @@
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SR) {
       const rec = new SR();
+      rec.lang = "en-US";
+      let listening = false;
+      const setListening = (on) => {
+        listening = on;
+        $("mic").textContent = on ? "Listening..." : "Mic";
+        $("mic").style.background = on ? "#d9534f" : "";
+      };
       rec.onresult = (e) => { $("q").value = e.results[0][0].transcript; ask($("q").value); };
-      $("mic").addEventListener("click", () => rec.start());
+      rec.onend = () => setListening(false);
+      rec.onerror = (e) => {
+        setListening(false);
+        $("answer").textContent = e.error === "not-allowed"
+          ? "Microphone access denied. Allow it in the browser and try again."
+          : "Voice input failed (" + e.error + "). You can type instead.";
+      };
+      $("mic").addEventListener("click", () => {
+        if (listening) { rec.stop(); return; }
+        try { rec.start(); setListening(true); } catch (_) { setListening(false); }
+      });
     } else {
       $("mic").style.display = "none";
     }
