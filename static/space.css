@@ -284,14 +284,27 @@ button:active:not(:disabled) { transform: scale(.97); }
   --r: 16px; --nav-h: 46px;
 }
 @supports not (backdrop-filter: blur(1px)) { :root { --glass: rgba(18, 22, 31, .92); } }
-body {
-  background:
-    radial-gradient(60rem 38rem at 88% -8%, rgba(95, 80, 200, .26), transparent 60%),
-    radial-gradient(48rem 34rem at -10% 30%, rgba(252, 61, 33, .12), transparent 60%),
-    radial-gradient(56rem 40rem at 72% 80%, rgba(40, 110, 200, .18), transparent 60%),
-    var(--bg);
-  background-attachment: fixed;
-}
+body { background: var(--bg); } /* colour now comes from #backdrop, which changes with the section in view */
+
+/* scroll-driven space backdrop (positions are set from space.js) */
+#backdrop { position: fixed; inset: 0; z-index: -2; overflow: hidden; pointer-events: none; }
+.bd-neb { position: absolute; inset: -12% -6%; opacity: 0; will-change: opacity, transform; }
+.bd-neb[data-for="hero"] { background: radial-gradient(60vw 45vh at 85% 12%, rgba(95, 80, 200, .32), transparent 62%), radial-gradient(50vw 40vh at 4% 45%, rgba(252, 61, 33, .13), transparent 62%); }
+.bd-neb[data-for="flight"] { background: radial-gradient(70vw 50vh at 50% 100%, rgba(252, 61, 33, .22), transparent 62%), radial-gradient(40vw 40vh at 92% 18%, rgba(255, 138, 76, .13), transparent 62%); }
+.bd-neb[data-for="spacecraft"] { background: radial-gradient(60vw 50vh at 12% 20%, rgba(160, 120, 255, .27), transparent 62%), radial-gradient(50vw 40vh at 90% 85%, rgba(60, 120, 230, .18), transparent 62%); }
+.bd-neb[data-for="telemetry"] { background: radial-gradient(60vw 45vh at 88% 25%, rgba(40, 200, 170, .18), transparent 62%), radial-gradient(50vw 45vh at 8% 80%, rgba(60, 120, 230, .18), transparent 62%); }
+.bd-neb[data-for="analysis"] { background: radial-gradient(60vw 45vh at 15% 30%, rgba(255, 176, 32, .15), transparent 62%), radial-gradient(55vw 45vh at 90% 75%, rgba(200, 80, 160, .15), transparent 62%); }
+.bd-neb[data-for="console"] { background: radial-gradient(65vw 50vh at 50% 0%, rgba(79, 141, 232, .24), transparent 62%), radial-gradient(45vw 40vh at 95% 90%, rgba(150, 110, 255, .16), transparent 62%); }
+.bd-neb[data-for="news"] { background: radial-gradient(70vw 50vh at 20% 90%, rgba(110, 90, 220, .24), transparent 62%), radial-gradient(40vw 35vh at 95% 10%, rgba(252, 61, 33, .12), transparent 62%); }
+.bd-earth { position: absolute; left: -16vmax; bottom: -22vmax; width: 44vmax; height: 44vmax; border-radius: 50%; transform-origin: 70% 30%; will-change: transform, opacity;
+  background: radial-gradient(circle at 68% 28%, #8fbaff 0, #2f62d6 26%, #0d2a6b 56%, #030b24 82%); box-shadow: 0 0 6vmax 1vmax rgba(80, 130, 255, .22), inset -3vmax -3vmax 6vmax rgba(0, 0, 20, .8); }
+.bd-earth i { position: absolute; inset: -1.2%; border-radius: 50%; border: 2px solid rgba(140, 190, 255, .35); filter: blur(2px); }
+.bd-moon { position: absolute; right: 7vw; top: 9vh; width: 20vmin; height: 20vmin; border-radius: 50%; will-change: transform, opacity;
+  background: radial-gradient(circle at 18% 22%, rgba(110, 112, 128, .5) 0 6%, transparent 7%), radial-gradient(circle at 62% 58%, rgba(110, 112, 128, .4) 0 9%, transparent 10%), radial-gradient(circle at 35% 30%, #f4f4f7, #a2a4b4 55%, #5d5f70);
+  box-shadow: inset -2vmin -2vmin 4vmin rgba(0, 0, 20, .55), 0 0 5vmin rgba(220, 225, 255, .16); }
+.bd-ship { position: absolute; left: 0; top: 0; width: clamp(96px, 11vw, 160px); margin: -2vw 0 0 -5vw; will-change: transform, opacity; opacity: 0; }
+.bd-ship svg { display: block; width: 100%; height: auto; overflow: visible; }
+.bd-flame { transform-box: fill-box; transform-origin: 100% 50%; }
 #progress { background: var(--grad); }
 #nav { background: rgba(5, 6, 8, .62); -webkit-backdrop-filter: blur(16px) saturate(150%); backdrop-filter: blur(16px) saturate(150%); border-bottom-color: var(--glass-line); }
 #flight, #spacecraft, #telemetry, #console, #news { border-top-color: var(--glass-line); }
@@ -421,6 +434,12 @@ tr[data-status="out_of_range"] .an-dot { background: var(--warn); } tr[data-stat
 .an-bar-track { display: inline-block; width: 64px; height: 6px; margin-right: .5rem; vertical-align: middle; border-radius: 3px; background: rgba(255, 255, 255, .12); overflow: hidden; }
 .an-bar-track i { display: block; height: 100%; background: var(--ok); }
 
+/* cursor spotlight on glass surfaces (position set from space.js) */
+.panel:hover, .story:hover, .card:hover, .an-tile:hover, .group:hover { background-image: radial-gradient(320px circle at var(--mx, 50%) var(--my, 50%), rgba(255, 255, 255, .085), transparent 70%); }
+#motionBtn { white-space: nowrap; flex: none; }
+.sec-head h2 .w { display: inline-block; }
+.js-motion .sec-head h2 .w { opacity: 0; }
+
 /* footer */
 footer { border-top: 0; background: linear-gradient(180deg, transparent, rgba(0, 0, 0, .55)); overflow: hidden; }
 footer::before { content: ""; display: block; height: 1px; max-width: 1180px; margin: 0 auto 1.6rem; background: var(--grad); opacity: .55; }
@@ -440,6 +459,7 @@ footer::after { content: "Astronaut Copilot"; content: "Astronaut Copilot" / "";
 @media (max-width: 640px) {
   #nav { gap: .5rem; padding: .3rem .6rem; } .brand, .meta { display: none; }
   #hero::before { display: none; } #hero::after { opacity: .35; }
+  #motionBtn { font-size: .62rem; padding: .25rem .55rem; }
   .bento { padding: 0 .8rem; } .bento .group { padding: .8rem; }
   .news-grid { grid-template-columns: 1fr; }
   .cards { grid-template-columns: repeat(2, 1fr); gap: .5rem; } .val { font-size: 1.3rem; }
@@ -447,6 +467,6 @@ footer::after { content: "Astronaut Copilot"; content: "Astronaut Copilot" / "";
   #log { height: 50vh; } #flight { height: 380vh; } #hero { padding-top: 2.5rem; }
 }
 @media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  *, *::before, *::after { animation: none !important; transition: none !important; }
+  html:not([data-motion="full"]) { scroll-behavior: auto; }
+  html:not([data-motion="full"]) *, html:not([data-motion="full"]) *::before, html:not([data-motion="full"]) *::after { animation: none !important; transition: none !important; }
 }

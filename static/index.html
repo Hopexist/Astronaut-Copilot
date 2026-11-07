@@ -6,9 +6,35 @@
   <meta name="theme-color" content="#04060f">
   <title>Astronaut Copilot</title>
   <link rel="stylesheet" href="/static/space.css">
+  <script>
+    // The OS "reduce motion" setting is often on by accident (battery saver, remote desktop). The Motion button in the nav lets a visitor opt back in.
+    try { if (localStorage.getItem("motion") === "full") document.documentElement.dataset.motion = "full"; } catch (_) {}
+  </script>
 </head>
 <body>
   <a class="skip" href="#hero">Skip to content</a>
+  <div id="backdrop" aria-hidden="true">
+    <div class="bd-neb" data-for="hero"></div>
+    <div class="bd-neb" data-for="flight"></div>
+    <div class="bd-neb" data-for="spacecraft"></div>
+    <div class="bd-neb" data-for="telemetry"></div>
+    <div class="bd-neb" data-for="analysis"></div>
+    <div class="bd-neb" data-for="console"></div>
+    <div class="bd-neb" data-for="news"></div>
+    <div class="bd-earth"><i></i></div>
+    <div class="bd-moon"></div>
+    <div class="bd-ship">
+      <svg viewBox="0 0 150 50" focusable="false">
+        <defs><linearGradient id="bdTrail" x1="0" x2="1"><stop offset="0" stop-color="#8fb4ff" stop-opacity="0"/><stop offset="1" stop-color="#8fb4ff" stop-opacity=".5"/></linearGradient></defs>
+        <rect x="0" y="23" width="62" height="4" fill="url(#bdTrail)"/>
+        <g class="bd-flame"><path d="M64 25 L50 19 L56 25 L50 31Z" fill="#ffb020"/></g>
+        <rect x="62" y="18" width="30" height="14" rx="2" fill="#d9dde6"/>
+        <rect x="62" y="22" width="30" height="3" fill="#fc3d21"/>
+        <rect x="70" y="2" width="14" height="14" fill="#233a73"/><rect x="70" y="34" width="14" height="14" fill="#233a73"/>
+        <path d="M92 19 L122 23 L122 27 L92 31Z" fill="#f4f5f7"/>
+      </svg>
+    </div>
+  </div>
   <canvas id="stars" aria-hidden="true"></canvas>
   <div id="progress" aria-hidden="true"></div>
   <div id="strip">Unofficial student project · Not affiliated with NASA</div>
@@ -25,6 +51,7 @@
       <a href="#news" data-s="news">News</a>
     </div>
     <span class="spacer"></span>
+    <button id="motionBtn" type="button" class="ghost mini" hidden title="Your system asks for reduced motion. This turns the page animations on or off.">Enable motion</button>
     <span class="meta">MET <span id="met">--:--:--</span></span>
     <span class="badge" id="status">NOMINAL</span>
   </nav>
@@ -219,7 +246,7 @@
   <script>
     const $ = (id) => document.getElementById(id);
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-    const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches && document.documentElement.dataset.motion !== "full";
     // Anime.js is optional polish: if it failed to load or throws, the UI still works.
     const animate = (targets, params) => {
       if (reduceMotion || !window.anime) return;

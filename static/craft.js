@@ -5,7 +5,7 @@
   const cv = $("craftCanvas");
   if (!cv || !cv.getContext) return;
   const ctx = cv.getContext("2d");
-  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches && document.documentElement.dataset.motion !== "full";
   const A = window.anime && window.anime.animate ? window.anime : null;
   const clamp = (v, lo = 0, hi = 1) => Math.min(hi, Math.max(lo, v));
   const TAU = Math.PI * 2;

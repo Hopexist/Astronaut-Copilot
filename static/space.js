@@ -4,7 +4,8 @@
 (() => {
   const $ = (id) => document.getElementById(id);
   const clamp = (v, lo = 0, hi = 1) => Math.min(hi, Math.max(lo, v));
-  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const osReduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const reduce = osReduce && document.documentElement.dataset.motion !== "full";
   const A = window.anime && window.anime.animate ? window.anime : null;
   const M = window.Motion && Motion.animate && Motion.scroll && Motion.inView ? Motion : null;
   const guard = (fn) => { try { return fn(); } catch (e) { console.warn("space.js:", e); } };
@@ -147,6 +148,111 @@
     setInterval(() => { if (phase >= 0) $("phaseChip").textContent = PHASES[phase].chip(); }, 500);
   });
   window.Flight = { setProgress, get phase() { return phase; } }; // exposed for tests
+
+  /* ---------- 8. scroll-driven space backdrop ----------
+     Nebula layers crossfade as each section comes to the middle of the screen, Earth recedes, the Moon
+     approaches and a spacecraft crosses the sky. The ship fades out while the flight section (which has
+     its own ship) is on screen. Only opacity and transforms change, so scrolling stays smooth. */
+  guard(() => {
+    const bd = $("backdrop");
+    if (!bd) return;
+    const ids = ["hero", "flight", "spacecraft", "telemetry", "analysis", "console", "news"];
+    const secs = ids.map($);
+    if (secs.some((s) => !s)) return;
+    const layers = ids.map((id) => bd.querySelector(`[data-for="${id}"]`));
+    const earth = bd.querySelector(".bd-earth"), moon = bd.querySelector(".bd-moon"), ship = bd.querySelector(".bd-ship");
+    let tops = [], bottoms = [], dirty = true, queued = false;
+    const smooth = (t) => t * t * (3 - 2 * t);
+    const measure = () => {
+      tops = secs.map((s) => s.getBoundingClientRect().top + scrollY);
+      bottoms = secs.map((s) => s.getBoundingClientRect().bottom + scrollY);
+      dirty = false;
+    };
+    const path = (q) => [6 + 84 * q, 66 + 16 * Math.sin(q * Math.PI * 3) - 38 * q]; // ship position in vw, vh
+
+    function frame() {
+      queued = false;
+      if (dirty) measure();
+      const p = clamp(scrollY / Math.max(1, document.documentElement.scrollHeight - innerHeight));
+      const mid = scrollY + innerHeight * 0.5;
+      let i = bottoms.findIndex((b) => mid < b);
+      if (i < 0) i = secs.length - 1;
+      const t = clamp((mid - tops[i]) / Math.max(1, bottoms[i] - tops[i]));
+      const w = ids.map(() => 0);
+      if (t > 0.65 && i < secs.length - 1) { const u = smooth((t - 0.65) / 0.35); w[i] = 1 - u; w[i + 1] = u; } else w[i] = 1;
+      layers.forEach((el, k) => {
+        el.style.opacity = w[k].toFixed(3);
+        if (!reduce) el.style.transform = `translate3d(0, ${(-p * (60 + k * 25)).toFixed(1)}px, 0)`;
+      });
+      const q = reduce ? 0.3 : p; // reduced motion: a fixed, still scene instead of one that moves with the scroll
+      earth.style.transform = `translate3d(${(-q * 8).toFixed(2)}vw, ${(q * 60).toFixed(1)}vh, 0) scale(${(1 - 0.45 * q).toFixed(3)})`;
+      const hand = 1 - w[1]; // the flight section draws its own Earth, Moon and ship, so the backdrop ones fade out there
+      earth.style.opacity = ((0.9 - 0.55 * q) * hand).toFixed(3);
+      moon.style.transform = `translate3d(0, ${(-12 * (1 - q)).toFixed(1)}vh, 0) scale(${(0.35 + q).toFixed(3)})`;
+      moon.style.opacity = ((0.15 + 0.75 * q) * hand).toFixed(3);
+      const [x, y] = path(q), [x2, y2] = path(Math.min(1, q + 0.01));
+      const ang = (Math.atan2(((y2 - y) * innerHeight) / 100, ((x2 - x) * innerWidth) / 100) * 180) / Math.PI;
+      ship.style.transform = `translate3d(${x.toFixed(2)}vw, ${y.toFixed(2)}vh, 0) rotate(${ang.toFixed(1)}deg)`;
+      ship.style.opacity = (0.95 * hand).toFixed(3);
+    }
+    const request = () => { if (!queued) { queued = true; requestAnimationFrame(frame); } };
+    const remeasure = () => { dirty = true; request(); };
+    addEventListener("scroll", request, { passive: true });
+    addEventListener("resize", remeasure);
+    document.addEventListener("news-rendered", remeasure);
+    if (window.ResizeObserver) new ResizeObserver(remeasure).observe(document.querySelector("main"));
+    frame();
+
+    if (A && !reduce) { // Anime.js: engine flame and a slow atmosphere pulse (inner elements, so they never fight the scroll transforms)
+      A.animate(bd.querySelector(".bd-flame"), { scaleX: [1, 0.55], opacity: [0.95, 0.5], duration: 140, ease: "linear", loop: true, alternate: true });
+      A.animate(earth.querySelector("i"), { opacity: [0.55, 1], duration: 3200, ease: "inOutSine", loop: true, alternate: true });
+    }
+  });
+
+  /* ---------- 9. section titles reveal word by word (Skiper UI style) ---------- */
+  guard(() => {
+    document.querySelectorAll(".sec-head h2").forEach((h) => {
+      const words = h.textContent.trim().split(/\s+/);
+      h.replaceChildren(...words.flatMap((word, i) => {
+        const s = document.createElement("span");
+        s.className = "w"; s.textContent = word;
+        return i ? [document.createTextNode(" "), s] : [s];
+      }));
+    });
+    if (!M || reduce) return;
+    M.inView(".sec-head h2", (h) => {
+      M.animate(h.querySelectorAll(".w"), { opacity: [0, 1], y: [28, 0] }, { duration: 0.6, delay: M.stagger(0.07), ease: "easeOut" });
+    }, { amount: 0.6 });
+    setTimeout(() => document.querySelectorAll(".sec-head h2 .w").forEach((w) => { if (getComputedStyle(w).opacity === "0" && w.getBoundingClientRect().top < innerHeight) w.style.opacity = 1; }), 4000);
+  });
+
+  /* ---------- 10. cursor spotlight on glass surfaces (Cult UI style) ---------- */
+  guard(() => {
+    if (reduce) return;
+    const SEL = ".panel, .story, .card, .an-tile, .group";
+    document.addEventListener("pointermove", (e) => {
+      if (e.pointerType !== "mouse" || !e.target.closest) return;
+      for (let el = e.target.closest(SEL); el; el = el.parentElement && el.parentElement.closest(SEL)) {
+        const r = el.getBoundingClientRect();
+        el.style.setProperty("--mx", e.clientX - r.left + "px");
+        el.style.setProperty("--my", e.clientY - r.top + "px");
+      }
+    }, { passive: true });
+  });
+
+  /* ---------- 11. motion switch: only shown when the OS asks for reduced motion ---------- */
+  guard(() => {
+    const btn = $("motionBtn");
+    if (!btn || !osReduce) return;
+    const full = document.documentElement.dataset.motion === "full";
+    btn.hidden = false;
+    btn.textContent = full ? "Reduce motion" : "Enable motion";
+    btn.setAttribute("aria-pressed", full);
+    btn.addEventListener("click", () => {
+      try { full ? localStorage.removeItem("motion") : localStorage.setItem("motion", "full"); } catch (_) {}
+      location.reload();
+    });
+  });
 
   /* ---------- 7. hero calls to action ---------- */
   guard(() => {
