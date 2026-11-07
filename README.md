@@ -40,17 +40,19 @@ The microphone only works on `localhost` or HTTPS, so use `127.0.0.1` or `localh
 - Anomaly detection (rolling median and MAD z-score). Detected anomalies are announced by voice without being asked.
 - Gemini function calling: the assistant calls `get_telemetry`, `get_trend`, `run_diagnostics`, `raise_alarm` and `get_mission_news`, and the page lists which tools each answer used.
 - Voice in (record, then transcribe with ElevenLabs) and voice out in two voices (Mission Control and the onboard assistant), with a waveform that moves while it speaks and a text transcript beside it.
+- **Mission analysis** (own section): per-reading min, max, mean, standard deviation, drift per minute, percent of time within limits and anomaly counts over 1 to 30 minutes, plus a health score, plain-language insights, a projection of when a drifting reading would reach a limit, and a mission log of faults, anomalies, alarms and answered questions. The assistant can use the same data (`get_analysis`, `get_mission_log`).
 - Real Artemis news from NASA's RSS feed, with a saved copy used if the feed is unreachable.
 - If Gemini or ElevenLabs fails, the page shows the text (or an error with a Retry button) instead of breaking.
 - Paid endpoints are capped (500-character questions, 2 MB recordings) and rate-limited per visitor.
 
-Tests: `python -m unittest discover -s tests -v` (9 tests, no extra packages).
+Tests: `python -m unittest discover -s tests -v` (15 tests, no extra packages).
 
 ## What does not work, or is not done
 
 - **Telemetry is simulated.** No real spacecraft data.
 - **Not deployed.** We planned a Vultr deployment (`deploy/setup.sh`) but Vultr's credit activation failed for our code, so there is no live link. The script is written but has never been run on a real server.
-- **No Tiger Data / database.** Telemetry history is kept in memory and resets when the server restarts. There is no persistent mission log.
+- **No database.** About 30 minutes of history and the last 200 mission log events are kept in memory and reset when the server restarts. We did not use Tiger Data.
+- The analysis "trend" is a simple fitted slope compared with the noise, and "limit in N min" assumes the current drift continues. Treat both as estimates, especially right after a fault, when the reading is still settling.
 - Answers that use tools take about 3 to 9 seconds.
 - Re-injecting a fault while the previous one is still fading can go unflagged.
 - Checked in Chrome-based browsers only (desktop width and a 390 px viewport). Not tried on real phones, Safari or Firefox.
@@ -58,7 +60,7 @@ Tests: `python -m unittest discover -s tests -v` (9 tests, no extra packages).
 
 ## Layout
 
-- `app/main.py` routes, `app/gemini.py` assistant, `app/tools.py` function-calling tools, `app/telemetry.py` simulator and detector, `app/voice.py` ElevenLabs, `app/news.py` NASA feed.
+- `app/main.py` routes, `app/gemini.py` assistant, `app/tools.py` function-calling tools, `app/telemetry.py` simulator, detector and mission log, `app/analysis.py` statistics over the history, `app/voice.py` ElevenLabs, `app/news.py` NASA feed.
 - `static/` plain HTML, CSS and JavaScript (no build step). Anime.js and Motion are included under `static/vendor/` (MIT).
 - `data/` baseline telemetry and the saved news copy.
 - `deploy/setup.sh` the prepared Vultr setup.

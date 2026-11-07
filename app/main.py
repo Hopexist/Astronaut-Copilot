@@ -5,12 +5,13 @@ from collections import defaultdict, deque
 from contextlib import asynccontextmanager
 from typing import Literal
 
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from app import telemetry as sim
+from app.analysis import MAX_MINUTES, analyze
 from app.gemini import ask_gemini, load_telemetry
 from app.news import get_news
 from app.tools import NOMINAL
@@ -87,6 +88,16 @@ def news() -> dict:
     return get_news()
 
 
+@app.get("/api/analysis")
+def analysis_report(minutes: int = Query(10, ge=1, le=MAX_MINUTES)) -> dict:
+    return analyze(minutes)
+
+
+@app.get("/api/log")
+def mission_log(limit: int = Query(30, ge=1, le=100)) -> list[dict]:
+    return sim.events(limit)
+
+
 @app.get("/api/nominal")
 def nominal() -> dict:
     return NOMINAL
@@ -121,6 +132,8 @@ def ask(body: Question) -> dict:
         answer, tools = ask_gemini(body.question)
     except Exception as exc:
         return {"answer": "", "audio": None, "tools": [], "error": f"Gemini failed: {exc}"}
+    # the question text is not logged: the log is public on this page
+    sim.log_event("question", "Assistant answered a question" + (f" using {', '.join(dict.fromkeys(t['name'] for t in tools))}" if tools else ""))
     try:
         audio = base64.b64encode(speak(answer, body.voice)).decode()
     except Exception:

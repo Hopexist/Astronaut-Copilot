@@ -1,23 +1,14 @@
 """Functions Gemini can call. Docstrings and type hints are the tool schema."""
 import re
+import time
 
 from app import telemetry as sim
+from app.analysis import analyze
 from app.news import get_news
 
 SYSTEMS = ("cabin", "power", "propulsion", "thermal", "navigation")
 
-# metric -> (min, max) nominal range
-NOMINAL: dict[str, tuple[float, float]] = {
-    "cabin.pressure_kpa": (97.0, 105.0),
-    "cabin.o2_percent": (19.5, 23.5),
-    "cabin.co2_ppm": (0.0, 1500.0),
-    "cabin.temp_c": (18.0, 27.0),
-    "power.battery_percent": (20.0, 100.0),
-    "power.solar_output_kw": (1.0, 10.0),
-    "power.load_kw": (0.0, 8.0),
-    "propulsion.fuel_percent": (15.0, 100.0),
-    "thermal.radiator_temp_c": (-30.0, 10.0),
-}
+NOMINAL = sim.NOMINAL  # metric -> (min, max) nominal range
 
 
 def get_telemetry(system: str = "all") -> dict:
@@ -110,4 +101,30 @@ def get_mission_news(topic: str = "") -> dict:
     }
 
 
-TOOLS = [get_telemetry, get_trend, run_diagnostics, raise_alarm, get_mission_news]
+def get_analysis(minutes: int = 10, metric: str = "") -> dict:
+    """Analyse how the spacecraft behaved over the last N minutes. Returns, per reading, the min, max,
+    mean, trend, percent of time within nominal limits, anomaly count and projected minutes to a limit,
+    plus an overall health score and plain-language insights. Use for questions about trends, history,
+    stability, risk or overall health.
+
+    Args:
+        minutes: Look-back window, 1 to 30 (right after start-up there may be less history).
+        metric: Optional dotted metric name to focus on, e.g. cabin.co2_ppm. Empty for all readings.
+    """
+    try:
+        return analyze(minutes, metric)
+    except KeyError:
+        return {"error": f"unknown metric {metric}", "valid": list(sim.METRICS)}
+
+
+def get_mission_log(limit: int = 10) -> dict:
+    """Get the most recent mission log events, newest first: injected faults, detected anomalies,
+    alarms raised, and questions answered. Use for "what happened" questions.
+
+    Args:
+        limit: How many events to return (1 to 30).
+    """
+    return {"events": [{"age_seconds": round(time.time() - e["t"]), "kind": e["kind"], "message": e["message"]} for e in sim.events(max(1, min(limit, 30)))]}
+
+
+TOOLS = [get_telemetry, get_trend, run_diagnostics, raise_alarm, get_mission_news, get_analysis, get_mission_log]

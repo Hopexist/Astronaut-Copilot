@@ -21,7 +21,8 @@ questions with Gemini, speaks answers with ElevenLabs.
 ## Structure
 - app/main.py (routes), app/gemini.py, app/voice.py, app/telemetry.py
   (live simulator + z-score anomaly detection), data/telemetry.json (baseline)
-- app/tools.py: Gemini function-calling tools (get_telemetry, get_trend, run_diagnostics, raise_alarm, get_mission_news)
+- app/tools.py: Gemini function-calling tools (get_telemetry, get_trend, run_diagnostics, raise_alarm, get_mission_news, get_analysis, get_mission_log)
+- app/analysis.py: stats over the 30 min in-memory history -> /api/analysis (5 s cache); mission log lives in app/telemetry.py (log_event/events) -> /api/log; static/analysis.js renders both. No database on purpose (Tiger Data dropped).
 - static/craft.js: exploded 3D spacecraft on a plain 2D canvas (own rotation/perspective, no 3D library); each part maps to telemetry paths and takes its colour from the card state
 - app/news.py: NASA Artemis RSS feed -> /api/news (15 min cache; falls back to data/news_fallback.json when offline)
 - Look and wording: plain mission-control tone, nasa.gov-style flat design, no NASA logo/branding; keep the "unofficial, not affiliated" notices

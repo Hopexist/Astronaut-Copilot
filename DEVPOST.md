@@ -11,6 +11,7 @@ Astronaut Copilot is a mission console for a simulated Artemis spacecraft (Artem
 - **Live telemetry:** nine readings (cabin O2, CO2, pressure and temperature; battery, solar output and load; fuel; radiator temperature) update every second with charts and nominal limits.
 - **Problem detection:** each reading is watched for sudden jumps away from its recent pattern. A flagged reading turns red, and Mission Control announces it in a separate voice.
 - **Ask by typing or voice:** the question is transcribed, answered, and spoken back. The assistant calls tools (`get_telemetry`, `get_trend`, `run_diagnostics`, `raise_alarm`, `get_mission_news`) so its answers come from live data, and the page shows which tools each answer used.
+- **Mission analysis:** a section that summarises the last 1 to 30 minutes of every reading: range, mean and spread, drift per minute, percent of time within limits, how many times it left its limits, and how often it was flagged. It adds a health score, plain-language insights and a projection of when a drifting reading would reach a limit if the drift continued. A mission log records faults, detected anomalies, alarms and answered questions (never the question text). The assistant can call the same analysis and log as tools (`get_analysis`, `get_mission_log`).
 - **Mission news:** a news section built from NASA's public Artemis feed. The assistant can answer questions about it ("Who is on the Artemis III crew?") using only the story text it was given.
 - **Spacecraft view:** an exploded 3D model of the craft (crew module, service module, solar arrays, tanks, engine, radiators, antenna). Drag to rotate, scrub to explode it, hover or select a part to see its readings. A part turns amber or red when one of its readings does.
 - **How it works:** a scroll-driven section where a spacecraft travels from Earth toward the Moon through four steps (normal operations, a problem is detected, the assistant answers, alert and recovery), tied to the live data.
@@ -24,7 +25,8 @@ Astronaut Copilot is a mission console for a simulated Artemis spacecraft (Artem
 - **News:** NASA's public Artemis RSS feed, cached for 15 minutes, with a saved copy used if the feed is unreachable. Only nasa.gov links and image hosts are allowed through to the page.
 - **Frontend:** plain HTML, CSS and JavaScript. The 3D spacecraft is drawn by a small renderer we wrote on a 2D canvas (no 3D library). Animations use Anime.js and Motion, both self-hosted so the demo does not depend on a CDN.
 - **Safety limits:** the paid endpoints cap recording size and question length and are rate-limited per client.
-- **Tests:** 9 automated tests (`python -m unittest discover -s tests`) cover the news filtering, offline behavior, the limits and the detector.
+- **Analysis:** plain Python statistics over a 30-minute in-memory history (least-squares slope for drift, counting separate excursions outside limits, a short cache so the page cannot overload the server).
+- **Tests:** 15 automated tests (`python -m unittest discover -s tests`) cover the news filtering, offline behavior, the limits, the detector and the analysis maths. We checked the analysis tests by deliberately breaking the code and confirming they fail.
 
 ## Challenges we ran into
 - **Browser speech recognition failed** in Brave and in embedded browsers, because it depends on a Google service. We replaced it with recording in the browser and transcribing on the server.
@@ -58,6 +60,8 @@ Real telemetry sources, a time-series database for longer history, vibration ana
 
 ## Known limitations
 - Telemetry is simulated.
+- History (30 minutes) and the mission log live in memory and reset when the server restarts; there is no database.
+- The analysis trend and "reaches a limit in N minutes" are simple estimates and are least reliable while a fault is still settling.
 - There is no live link: the Vultr deployment could not be created (see above), so the app runs locally and the demo video shows it.
 - Answers that use tools take about 3 to 9 seconds.
 - Re-injecting a fault while the previous one is still fading can go unflagged, because the baseline has already shifted.

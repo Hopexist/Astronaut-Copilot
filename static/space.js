@@ -73,7 +73,7 @@
     const io = new IntersectionObserver((entries) => {
       for (const en of entries) if (en.isIntersecting) links.forEach((a) => a.classList.toggle("active", a.dataset.s === en.target.id));
     }, { rootMargin: "-45% 0px -50% 0px" });
-    ["hero", "news", "flight", "spacecraft", "telemetry", "console"].forEach((id) => $(id) && io.observe($(id)));
+    ["hero", "news", "flight", "spacecraft", "telemetry", "analysis", "console"].forEach((id) => $(id) && io.observe($(id)));
   });
 
   /* ---------- 4. scroll reveals (Motion inView) ---------- */

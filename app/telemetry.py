@@ -8,7 +8,22 @@ from pathlib import Path
 
 TELEMETRY_PATH = Path(__file__).resolve().parent.parent / "data" / "telemetry.json"
 
-HISTORY_LEN = 120  # samples kept per metric (~2 min at 1 Hz)
+HISTORY_LEN = 1800  # samples kept per metric (~30 min at 1 Hz), used by the analysis
+RECENT = 120  # samples served to the live charts (~2 min)
+EVENT_LEN = 200  # mission log entries kept in memory
+
+# metric -> (min, max) nominal range
+NOMINAL: dict[str, tuple[float, float]] = {
+    "cabin.pressure_kpa": (97.0, 105.0),
+    "cabin.o2_percent": (19.5, 23.5),
+    "cabin.co2_ppm": (0.0, 1500.0),
+    "cabin.temp_c": (18.0, 27.0),
+    "power.battery_percent": (20.0, 100.0),
+    "power.solar_output_kw": (1.0, 10.0),
+    "power.load_kw": (0.0, 8.0),
+    "propulsion.fuel_percent": (15.0, 100.0),
+    "thermal.radiator_temp_c": (-30.0, 10.0),
+}
 MIN_SAMPLES = 30  # need this many before detecting
 WINDOW = 60  # samples used for the rolling baseline
 Z_THRESHOLD = 5.0
@@ -35,7 +50,21 @@ _baseline: dict = json.loads(TELEMETRY_PATH.read_text(encoding="utf-8"))
 _state: dict = copy.deepcopy(_baseline)
 _history: dict[str, deque] = {m: deque(maxlen=HISTORY_LEN) for m in METRICS}
 _active: dict[str, dict] = {}  # metric -> anomaly info
+_events: deque = deque(maxlen=EVENT_LEN)  # mission log, newest last
 _started = time.time()
+
+
+def log_event(kind: str, message: str, data: dict | None = None) -> None:
+    _events.append({"t": time.time(), "kind": kind, "message": message, "data": data or {}})
+
+
+def events(limit: int = 30) -> list[dict]:
+    """Most recent mission log entries, newest first."""
+    return list(_events)[::-1][:limit]
+
+
+def values() -> dict[str, float]:
+    return {path: _get(_state, path) for path in METRICS}
 
 
 def _get(data: dict, path: str) -> float:
@@ -79,6 +108,8 @@ def _detect(path: str, value: float, now: float) -> None:
         sd = max(1.4826 * mad, METRICS[path][0] * 0.5)
         z = (value - med) / sd
         if abs(z) >= Z_THRESHOLD:
+            if path not in _active:
+                log_event("anomaly", f"{path} is {'high' if z > 0 else 'low'} (z = {z:.1f})", {"metric": path, "z_score": round(z, 1)})
             _active[path] = {
                 "metric": path,
                 "value": value,
@@ -95,6 +126,7 @@ def inject_fault(path: str, direction: int = 1) -> None:
     if path not in METRICS:
         raise KeyError(path)
     _bias[path] += direction * FAULT_SIGMAS * METRICS[path][0]
+    log_event("fault", f"Fault injected on {path} ({'up' if direction > 0 else 'down'})", {"metric": path})
 
 
 def anomalies() -> list[dict]:
@@ -113,6 +145,7 @@ def add_alert(level: str, system: str, message: str) -> dict:
     alert = {"level": level, "system": system, "message": message}
     _alerts.append({**alert, "ts": time.time()})
     del _alerts[:-MAX_ALERTS]
+    log_event("alarm", f"{level.upper()} alarm on {system}: {message}", {"system": system, "level": level})
     return alert
 
 
@@ -156,7 +189,13 @@ def snapshot() -> dict:
     return data
 
 
+def samples(path: str, seconds: float) -> list[tuple[float, float]]:
+    """(timestamp, value) pairs for one metric over the last `seconds`."""
+    cutoff = time.time() - seconds
+    return [(t, v) for t, v in _history[path] if t >= cutoff]
+
+
 def history(path: str) -> list[dict]:
     if path not in METRICS:
         raise KeyError(path)
-    return [{"t": t, "v": v} for t, v in _history[path]]
+    return [{"t": t, "v": v} for t, v in list(_history[path])[-RECENT:]]

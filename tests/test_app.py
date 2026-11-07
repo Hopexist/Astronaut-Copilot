@@ -1,6 +1,8 @@
 """Run from the project root:  python -m unittest discover -s tests -v"""
+import copy
 import random
 import sys
+import time
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -9,7 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from fastapi.testclient import TestClient  # noqa: E402
 
-from app import main, news, tools  # noqa: E402
+from app import analysis, main, news, tools  # noqa: E402
 from app import telemetry as sim  # noqa: E402
 
 RSS = """<?xml version="1.0"?>
@@ -100,6 +102,80 @@ class DetectorTests(unittest.TestCase):
         self.assertEqual(flagged["cabin.co2_ppm"]["direction"], "high")
         sim._active.clear()
         sim._bias["cabin.co2_ppm"] = 0.0
+
+
+class AnalysisTests(unittest.TestCase):
+    """Five minutes of synthetic history at 1 Hz, mid-range and flat unless a test changes one metric."""
+
+    def setUp(self):
+        self.saved = ({m: list(h) for m, h in sim._history.items()}, copy.deepcopy(sim._state), list(sim._events))
+        analysis._cache.clear()
+        self.t0 = time.time() - 300
+        for m, h in sim._history.items():
+            lo, hi = sim.NOMINAL[m]
+            h.clear()
+            h.extend((self.t0 + i, (lo + hi) / 2) for i in range(300))
+
+    def tearDown(self):
+        for m, h in sim._history.items():
+            h.clear()
+            h.extend(self.saved[0][m])
+        sim._state.clear()
+        sim._state.update(self.saved[1])
+        sim._events.clear()
+        sim._events.extend(self.saved[2])
+        analysis._cache.clear()
+
+    def row(self, metric):
+        return next(r for r in analysis.analyze(10)["metrics"] if r["metric"] == metric)
+
+    def test_flat_history_is_steady_and_fully_nominal(self):
+        for m in sim.METRICS:
+            sim._state[m.split(".")[0]][m.split(".")[1]] = sum(sim.NOMINAL[m]) / 2
+        r = self.row("cabin.co2_ppm")
+        self.assertEqual((r["trend"], r["pct_nominal"], r["excursions"]), ("steady", 100.0, 0))
+        self.assertEqual(analysis.analyze(10)["summary"]["health"], 100)
+
+    def test_rising_reading_reports_drift_and_time_to_limit(self):
+        sim._history["cabin.co2_ppm"].clear()
+        sim._history["cabin.co2_ppm"].extend((self.t0 + i, 700 + 2.0 * i) for i in range(300))  # +2 ppm per second
+        sim._state["cabin"]["co2_ppm"] = 1298.0
+        r = self.row("cabin.co2_ppm")
+        self.assertEqual(r["trend"], "rising")
+        self.assertAlmostEqual(r["change_per_min"], 120.0, delta=1)
+        self.assertAlmostEqual(r["minutes_to_limit"], (1500 - 1298) / 120, delta=0.1)
+
+    def test_excursions_and_time_within_limits(self):
+        series = [50.0] * 50 + [10.0] * 20 + [50.0] * 50 + [10.0] * 20 + [50.0] * 160  # battery limit is 20
+        sim._history["power.battery_percent"].clear()
+        sim._history["power.battery_percent"].extend((self.t0 + i, v) for i, v in enumerate(series))
+        r = self.row("power.battery_percent")
+        self.assertEqual(r["excursions"], 2)
+        self.assertAlmostEqual(r["pct_nominal"], 100 * (1 - 40 / 300), places=1)
+
+    def test_too_little_history_gives_unknown_trend(self):
+        for h in sim._history.values():
+            h.clear()
+            h.extend([(time.time() - 1, 1.0), (time.time(), 1.0)])
+        self.assertEqual(self.row("cabin.co2_ppm")["trend"], "unknown")
+
+    def test_unknown_metric_is_rejected(self):
+        with self.assertRaises(KeyError):
+            analysis.analyze(10, "nope")
+        self.assertIn("error", tools.get_analysis(10, "nope"))
+
+    def test_events_are_logged_and_served(self):
+        sim.inject_fault("cabin.temp_c")
+        self.assertEqual(sim.events(1)[0]["kind"], "fault")
+        main._hits.clear()
+        client = TestClient(main.app)
+        with mock.patch.object(main, "ask_gemini", return_value=("ok", [{"name": "get_analysis", "args": {}}])), mock.patch.object(main, "speak", return_value=b"x"):
+            client.post("/api/ask", json={"question": "my secret question"})
+        newest = client.get("/api/log?limit=1").json()[0]
+        self.assertEqual(newest["kind"], "question")
+        self.assertNotIn("secret", newest["message"])  # the log is public, so it must not echo questions
+        self.assertEqual(client.get("/api/analysis?minutes=0").status_code, 422)
+        self.assertEqual(len(client.get("/api/analysis?minutes=5").json()["metrics"]), 9)
 
 
 if __name__ == "__main__":

@@ -20,6 +20,7 @@
       <a href="#flight" data-s="flight">How it works</a>
       <a href="#spacecraft" data-s="spacecraft">Spacecraft</a>
       <a href="#telemetry" data-s="telemetry">Telemetry</a>
+      <a href="#analysis" data-s="analysis">Analysis</a>
       <a href="#console" data-s="console">Assistant</a>
       <a href="#news" data-s="news">News</a>
     </div>
@@ -100,6 +101,31 @@
       <div class="group g-power reveal"><h3>Power</h3><div class="cards" id="grid-power"></div></div>
       <div class="group g-prop reveal"><h3>Propulsion</h3><div class="cards" id="grid-propulsion"></div></div>
       <div class="group g-therm reveal"><h3>Thermal</h3><div class="cards" id="grid-thermal"></div></div>
+      </div>
+    </section>
+
+    <section id="analysis" aria-label="Mission analysis">
+      <div class="sec-head reveal"><div><span class="kicker">Analytics</span><h2>Mission analysis</h2></div><p>How each reading has behaved over a window: range, average, drift, time within limits and anomalies, with a projection of when a drifting reading would reach a limit.</p></div>
+      <div class="an-bar reveal">
+        <label for="anWindow">Window</label>
+        <select id="anWindow"><option value="1">1 min</option><option value="5" selected>5 min</option><option value="15">15 min</option><option value="30">30 min</option></select>
+        <span class="an-note" id="anNote" aria-live="polite"></span>
+      </div>
+      <div class="an-tiles reveal" id="anTiles"></div>
+      <div class="an-grid reveal">
+        <section class="panel an-split" aria-label="Insights and mission log">
+          <div><h2>Insights</h2><ul class="an-insights" id="anInsights"><li>Loading analysis...</li></ul></div>
+          <div><h2>Mission log</h2><ol class="an-log" id="anLog"></ol></div>
+        </section>
+        <section class="panel an-table-panel" aria-label="Readings">
+          <h2>Readings</h2>
+          <div class="an-table-wrap">
+            <table class="an-table">
+              <thead><tr><th scope="col">Reading</th><th scope="col">Now</th><th scope="col">Min / max</th><th scope="col">Mean ± sd</th><th scope="col">Drift per min</th><th scope="col">Within limits</th><th scope="col">Flags</th></tr></thead>
+              <tbody id="anBody"></tbody>
+            </table>
+          </div>
+        </section>
       </div>
     </section>
 
@@ -650,6 +676,7 @@
   </script>
   <script src="/static/space.js"></script>
   <script src="/static/news.js"></script>
+  <script src="/static/analysis.js"></script>
   <script src="/static/craft.js"></script>
 </body>
 </html>
