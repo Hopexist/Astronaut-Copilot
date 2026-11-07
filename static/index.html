@@ -19,6 +19,7 @@
       <a href="#hero" data-s="hero" class="active">Mission</a>
       <a href="#news" data-s="news">News</a>
       <a href="#flight" data-s="flight">How it works</a>
+      <a href="#spacecraft" data-s="spacecraft">Spacecraft</a>
       <a href="#telemetry" data-s="telemetry">Telemetry</a>
       <a href="#console" data-s="console">Assistant</a>
     </div>
@@ -88,6 +89,22 @@
           <div class="dots" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
           <div class="dist">Illustrative path · <b id="dist">0 km</b> from Earth</div>
         </div>
+      </div>
+    </section>
+
+    <section id="spacecraft" aria-label="Spacecraft components">
+      <div class="sec-head reveal"><div><span class="kicker">Spacecraft</span><h2>Component status</h2></div><p>An exploded view of the craft. Drag to rotate, hover a part for its readings, or pick one from the list.</p></div>
+      <div class="craft-wrap reveal">
+        <div class="craft-stage">
+          <canvas id="craftCanvas" tabindex="0" role="img" aria-label="Exploded 3D view of the spacecraft. Arrow keys rotate it, plus and minus explode it. Component details are in the list beside it."></canvas>
+          <div class="scrub"><label for="explode">Assembled</label><input type="range" id="explode" min="0" max="100" value="0"><span aria-hidden="true">Exploded</span></div>
+        </div>
+        <aside class="craft-side panel" aria-label="Component status">
+          <h2>Components <span id="craftSummary" class="craft-summary"></span></h2>
+          <div class="craft-bar" id="craftBar" role="group" aria-label="Health of each component"></div>
+          <div class="craft-legend" id="craftLegend"></div>
+          <div class="craft-detail" id="craftDetail"></div>
+        </aside>
       </div>
     </section>
 
@@ -607,5 +624,6 @@
   </script>
   <script src="/static/space.js"></script>
   <script src="/static/news.js"></script>
+  <script src="/static/craft.js"></script>
 </body>
 </html>

@@ -20,6 +20,7 @@ questions with Gemini, speaks answers with ElevenLabs.
 - app/main.py (routes), app/gemini.py, app/voice.py, app/telemetry.py
   (live simulator + z-score anomaly detection), data/telemetry.json (baseline)
 - app/tools.py: Gemini function-calling tools (get_telemetry, get_trend, run_diagnostics, raise_alarm, get_mission_news)
+- static/craft.js: exploded 3D spacecraft on a plain 2D canvas (own rotation/perspective, no 3D library); each part maps to telemetry paths and takes its colour from the card state
 - app/news.py: NASA Artemis RSS feed -> /api/news (15 min cache; falls back to data/news_fallback.json when offline)
 - Look and wording: plain mission-control tone, nasa.gov-style flat design, no NASA logo/branding; keep the "unofficial, not affiliated" notices
 - Demo: `POST /api/sim/fault {"metric": "cabin.co2_ppm"}` injects an anomaly
