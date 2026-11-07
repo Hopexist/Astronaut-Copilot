@@ -19,6 +19,7 @@ questions with Gemini, speaks answers with ElevenLabs.
 ## Structure
 - app/main.py (routes), app/gemini.py, app/voice.py, app/telemetry.py
   (live simulator + z-score anomaly detection), data/telemetry.json (baseline)
+- app/tools.py: Gemini function-calling tools (get_telemetry, get_trend, run_diagnostics, raise_alarm)
 - Demo: `POST /api/sim/fault {"metric": "cabin.co2_ppm"}` injects an anomaly
 - static/ (frontend)
 

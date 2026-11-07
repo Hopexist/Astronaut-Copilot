@@ -71,6 +71,7 @@
           <button type="submit">Ask</button>
         </form>
         <div id="answer"></div>
+        <div id="tools" style="margin-top:.4rem;font-size:.75rem;color:var(--dim)"></div>
         <canvas id="wave"></canvas>
         <label class="chk"><input type="checkbox" id="announce" checked style="flex:none"> Announce new anomalies by voice</label>
       </section>
@@ -274,6 +275,7 @@
     async function ask(question, silentIfBusy) {
       if (silentIfBusy && speaking) return;
       setAnswer("Thinking...");
+      $("tools").textContent = "";
       try {
         const res = await fetch("/api/ask", {
           method: "POST",
@@ -283,6 +285,7 @@
         const data = await res.json();
         if (data.error) { setAnswer(data.error, true); return; }
         setAnswer(data.answer);
+        $("tools").textContent = data.tools?.length ? "Tools used: " + data.tools.join(" → ") : "";
         if (data.audio) playAudio(data.audio);
         else setAnswer(data.answer + "\n(audio unavailable)");
       } catch (e) {

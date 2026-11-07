@@ -77,11 +77,11 @@ async def transcribe_audio(request: Request) -> dict:
 @app.post("/api/ask")
 def ask(body: Question) -> dict:
     try:
-        answer = ask_gemini(body.question)
+        answer, tools = ask_gemini(body.question)
     except Exception as exc:
-        return {"answer": "", "audio": None, "error": f"Gemini failed: {exc}"}
+        return {"answer": "", "audio": None, "tools": [], "error": f"Gemini failed: {exc}"}
     try:
         audio = base64.b64encode(speak(answer)).decode()
     except Exception:
         audio = None  # show text if audio fails
-    return {"answer": answer, "audio": audio, "error": None}
+    return {"answer": answer, "audio": audio, "tools": tools, "error": None}

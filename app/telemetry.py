@@ -104,9 +104,54 @@ def anomalies() -> list[dict]:
     )
 
 
+ALERT_TTL = 300  # runtime alerts expire after 5 min
+MAX_ALERTS = 5
+_alerts: list[dict] = []  # raised at runtime (e.g. by Gemini)
+
+
+def add_alert(level: str, system: str, message: str) -> dict:
+    alert = {"level": level, "system": system, "message": message}
+    _alerts.append({**alert, "ts": time.time()})
+    del _alerts[:-MAX_ALERTS]
+    return alert
+
+
+def _live_alerts() -> list[dict]:
+    now = time.time()
+    return [
+        {k: v for k, v in a.items() if k != "ts"}
+        for a in _alerts
+        if now - a["ts"] <= ALERT_TTL
+    ]
+
+
+def trend(path: str, seconds: int) -> dict:
+    """Summary of one metric over the last `seconds`."""
+    if path not in METRICS:
+        raise KeyError(path)
+    cutoff = time.time() - seconds
+    pts = [(t, v) for t, v in _history[path] if t >= cutoff]
+    if len(pts) < 2:
+        return {"metric": path, "samples": len(pts), "note": "not enough history yet"}
+    (t0, v0), (t1, v1) = pts[0], pts[-1]
+    values = [v for _, v in pts]
+    return {
+        "metric": path,
+        "window_seconds": round(t1 - t0),
+        "samples": len(pts),
+        "start": round(v0, 3),
+        "end": round(v1, 3),
+        "change": round(v1 - v0, 3),
+        "min": round(min(values), 3),
+        "max": round(max(values), 3),
+        "direction": "rising" if v1 - v0 > 0 else "falling",
+    }
+
+
 def snapshot() -> dict:
     """Current telemetry plus any active anomalies."""
     data = copy.deepcopy(_state)
+    data["alerts"] = data.get("alerts", []) + _live_alerts()
     data["anomalies"] = anomalies()
     return data
 
