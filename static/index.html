@@ -51,31 +51,44 @@
 
     $("form").addEventListener("submit", (e) => { e.preventDefault(); ask($("q").value); });
 
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SR) {
-      const rec = new SR();
-      rec.lang = "en-US";
-      let listening = false;
-      const setListening = (on) => {
-        listening = on;
-        $("mic").textContent = on ? "Listening..." : "Mic";
-        $("mic").style.background = on ? "#d9534f" : "";
+    let recorder = null;
+    const setMic = (label, on) => {
+      $("mic").textContent = label;
+      $("mic").style.background = on ? "#d9534f" : "";
+    };
+
+    async function startRecording() {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const chunks = [];
+      recorder = new MediaRecorder(stream);
+      recorder.ondataavailable = (e) => chunks.push(e.data);
+      recorder.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        recorder = null;
+        setMic("Mic", false);
+        $("answer").textContent = "Transcribing...";
+        try {
+          const res = await fetch("/api/transcribe", { method: "POST", body: new Blob(chunks) });
+          const data = await res.json();
+          if (data.error || !data.text) { $("answer").textContent = data.error || "Didn't catch that. Try again."; return; }
+          $("q").value = data.text;
+          ask(data.text);
+        } catch (e) {
+          $("answer").textContent = "Transcription request failed: " + e;
+        }
       };
-      rec.onresult = (e) => { $("q").value = e.results[0][0].transcript; ask($("q").value); };
-      rec.onend = () => setListening(false);
-      rec.onerror = (e) => {
-        setListening(false);
-        $("answer").textContent = e.error === "not-allowed"
-          ? "Microphone access denied. Allow it in the browser and try again."
-          : "Voice input failed (" + e.error + "). You can type instead.";
-      };
-      $("mic").addEventListener("click", () => {
-        if (listening) { rec.stop(); return; }
-        try { rec.start(); setListening(true); } catch (_) { setListening(false); }
-      });
-    } else {
-      $("mic").style.display = "none";
+      recorder.start();
+      setMic("Stop", true);
     }
+
+    $("mic").addEventListener("click", async () => {
+      if (recorder) { recorder.stop(); return; }
+      try { await startRecording(); }
+      catch (e) {
+        setMic("Mic", false);
+        $("answer").textContent = "Microphone unavailable (" + e.name + "). You can type instead.";
+      }
+    });
   </script>
 </body>
 </html>

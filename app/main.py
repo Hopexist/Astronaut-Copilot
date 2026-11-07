@@ -1,12 +1,12 @@
 import base64
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from app.gemini import ask_gemini, load_telemetry
-from app.voice import speak
+from app.voice import speak, transcribe
 
 app = FastAPI(title="Astronaut Copilot")
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -24,6 +24,14 @@ def index() -> FileResponse:
 @app.get("/api/telemetry")
 def telemetry() -> dict:
     return load_telemetry()
+
+
+@app.post("/api/transcribe")
+async def transcribe_audio(request: Request) -> dict:
+    try:
+        return {"text": transcribe(await request.body()), "error": None}
+    except Exception as exc:
+        return {"text": "", "error": f"Transcription failed: {exc}"}
 
 
 @app.post("/api/ask")
