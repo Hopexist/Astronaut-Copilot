@@ -149,6 +149,10 @@
             <button type="button" class="ghost" data-q="What is the latest on Artemis III?">Latest on Artemis III</button>
           </div>
           <div class="hint" id="micStatus" aria-live="polite">Press M to talk · Enter to send</div>
+          <div class="speech-bar">
+            <span id="speaker" class="speaker" aria-live="polite">Silent</span>
+            <button id="stopSpeech" type="button" class="ghost mini" hidden>Stop speaking</button>
+          </div>
           <canvas id="wave" aria-hidden="true"></canvas>
           <label class="chk"><input type="checkbox" id="announce" checked> Announce new anomalies by voice</label>
         </section>
@@ -348,6 +352,7 @@
       log.scrollTop = log.scrollHeight;
       animate(el, { opacity: [0, 1], translateY: [10, 0], duration: 320, ease: "outQuad" });
       return {
+        el,
         set(txt, calls, isErr, onRetry) {
           el.classList.remove("pending");
           el.classList.toggle("err", !!isErr);
@@ -501,23 +506,56 @@
         let amp = 0.04;
         if (speaking) amp = data ? data[Math.floor((i / n) * data.length * 0.7)] / 255 : 0.3 + 0.3 * Math.sin(t + i * 0.6);
         const bh = Math.max(2, amp * h);
-        ctx.fillStyle = speaking ? "#4f7cff" : "#1f2a48";
+        ctx.fillStyle = speaking ? (speech.current && speech.current.voice === "control" ? "#b9a3ff" : "#4f7cff") : "#1f2a48";
         ctx.fillRect(i * (bw + gap), (h - bh) / 2, bw, bh);
       }
       requestAnimationFrame(drawWave);
     }
     drawWave();
 
-    function playAudio(b64) {
-      speaking = true;
-      return new Promise((resolve) => {
-        const done = () => { speaking = false; resolve(); };
-        const audio = new Audio("data:audio/mpeg;base64," + b64);
-        try { if (audioCtx && analyser) audioCtx.createMediaElementSource(audio).connect(analyser); } catch (_) {}
-        audio.onended = audio.onerror = done;
-        audio.play().catch(done);
-      });
+    // ---- speech queue: one voice at a time, with a visible speaker and a stop button
+    const SPEAKERS = { copilot: "Copilot", control: "Mission Control" };
+    const MAX_QUEUED = 3; // an answer is always on screen as text, so extra audio is dropped, not stacked
+    const speech = { queue: [], current: null };
+
+    function updateSpeaker() {
+      const cur = speech.current;
+      speaking = !!cur || speech.queue.length > 0;
+      $("speaker").textContent = cur ? `${SPEAKERS[cur.voice]} is speaking` : "Silent";
+      $("speaker").dataset.voice = cur ? cur.voice : "";
+      $("stopSpeech").hidden = !speaking;
+      document.querySelectorAll(".msg.speaking").forEach((m) => m.classList.remove("speaking"));
+      if (cur && cur.el) cur.el.classList.add("speaking");
     }
+
+    function playNext() {
+      if (speech.current || !speech.queue.length) { updateSpeaker(); return; }
+      const item = speech.queue.shift();
+      const audio = new Audio("data:audio/mpeg;base64," + item.b64);
+      item.audio = audio;
+      speech.current = item;
+      try { if (audioCtx && analyser) audioCtx.createMediaElementSource(audio).connect(analyser); } catch (_) {}
+      const done = () => { if (speech.current === item) { speech.current = null; playNext(); } };
+      audio.onended = audio.onerror = done;
+      audio.play().catch(done);
+      updateSpeaker();
+    }
+
+    function say(b64, voice, el) {
+      if (speech.queue.length >= MAX_QUEUED) return;
+      speech.queue.push({ b64, voice, el });
+      playNext();
+    }
+
+    function stopSpeech() {
+      speech.queue.length = 0;
+      const item = speech.current;
+      speech.current = null;
+      if (item) { item.audio.onended = item.audio.onerror = null; item.audio.pause(); }
+      updateSpeaker();
+    }
+    $("stopSpeech").addEventListener("click", stopSpeech);
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && speaking && !$("detail").open) stopSpeech(); });
 
     // ---- ask
     let inflight = 0;
@@ -542,7 +580,7 @@
         }
         if (data.error) { msg.set(data.error, [], true, retry); return; }
         msg.set(data.answer + (data.audio ? "" : "\n(audio unavailable)"), data.tools);
-        if (data.audio) playAudio(data.audio);
+        if (data.audio) say(data.audio, voice, msg.el);
       } catch (e) {
         msg.set("Request failed: " + e, [], true, retry);
       } finally {
@@ -655,14 +693,18 @@
       micStatus("Listening... press M or Stop when done");
     }
 
+    let micStarting = false; // ignores a second press while the browser is still asking for permission
     async function toggleMic() {
       ensureAudio();
       if (recorder) { recorder.stop(); return; }
+      if (micStarting) return;
+      micStarting = true;
+      stopSpeech(); // otherwise the microphone records the copilot talking
       try { await startRecording(); }
       catch (e) {
         setMic("Mic", false);
         micFail(MIC_ERRORS[e.name] || `Recording is not available in this browser (${e.name}). Open this page in Chrome or Edge, or type instead.`);
-      }
+      } finally { micStarting = false; }
     }
     $("mic").addEventListener("click", toggleMic);
     document.querySelectorAll(".suggest button").forEach((b) => b.addEventListener("click", () => { ensureAudio(); ask(b.dataset.q); }));
