@@ -4,11 +4,12 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from google import genai
+from google.genai import types
 
 load_dotenv(".env.local")
 load_dotenv(".env")
 
-MODEL = "gemini-2.5-flash"
+MODEL = "gemini-3.1-flash-lite"  # fast; gemini-3.8-flash was ~9s+ per call
 TELEMETRY_PATH = Path(__file__).resolve().parent.parent / "data" / "telemetry.json"
 
 SYSTEM_PROMPT = (
@@ -23,7 +24,10 @@ def load_telemetry() -> dict:
 
 
 def ask_gemini(question: str) -> str:
-    client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+    client = genai.Client(
+        api_key=os.environ["GEMINI_API_KEY"],
+        http_options=types.HttpOptions(timeout=30000),
+    )
     prompt = f"Telemetry:\n{json.dumps(load_telemetry())}\n\nQuestion: {question}"
     response = client.models.generate_content(
         model=MODEL,
