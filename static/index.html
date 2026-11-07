@@ -3,149 +3,125 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#04060f">
   <title>Astronaut Copilot</title>
-  <style>
-    :root { --bg: #070b16; --panel: #0f1629; --panel2: #141c34; --line: #1f2a48; --text: #e6ecff; --dim: #93a0c2;
-            --ok: #3ddc97; --warn: #ffb020; --bad: #ff4d5e; --accent: #4f7cff; --control: #b48cff; }
-    * { box-sizing: border-box; }
-    body { margin: 0; font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); }
-    :focus-visible { outline: 2px solid #9db8ff; outline-offset: 2px; }
-    header { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; align-items: baseline; padding: .8rem 1rem; border-bottom: 1px solid var(--line); }
-    header h1 { font-size: 1.1rem; margin: 0; letter-spacing: .08em; text-transform: uppercase; }
-    header .meta { color: var(--dim); font-size: .85rem; font-variant-numeric: tabular-nums; }
-    .spacer { flex: 1; }
-    .badge { padding: .15rem .6rem; border-radius: 99px; font-size: .75rem; font-weight: 600; background: #12301f; color: var(--ok); }
-    .badge.bad { background: #3a141a; color: var(--bad); }
-    .badge.off { background: #3a2c10; color: var(--warn); }
-    main { display: grid; gap: 1rem; padding: 1rem; max-width: 1200px; margin: 0 auto; }
-    #banner { display: none; padding: .7rem 1rem; border-radius: 8px; background: #3a141a; border: 1px solid var(--bad); }
-    #banner.show { display: block; }
-    #banner.conn { background: #3a2c10; border-color: var(--warn); }
-
-    #grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: .75rem; }
-    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: .7rem .8rem; cursor: pointer; transition: border-color .2s; }
-    .card:hover { border-color: #3a4a7a; }
-    .card.warn { border-color: var(--warn); }
-    .card.bad { border-color: var(--bad); box-shadow: 0 0 0 1px var(--bad) inset; }
-    .card .top { display: flex; align-items: center; gap: .45rem; color: var(--dim); font-size: .78rem; }
-    .card .tag { margin-left: auto; font-size: .62rem; font-weight: 700; letter-spacing: .05em; }
-    .card.warn .tag { color: var(--warn); } .card.bad .tag { color: var(--bad); }
-    .light { width: .6rem; height: .6rem; border-radius: 50%; background: var(--ok); box-shadow: 0 0 6px var(--ok); flex: none; }
-    .card.warn .light { background: var(--warn); box-shadow: 0 0 6px var(--warn); }
-    .card.bad .light { background: var(--bad); box-shadow: 0 0 8px var(--bad); animation: pulse 1s infinite; }
-    @keyframes pulse { 50% { opacity: .35; } }
-    .val { font-size: 1.6rem; font-weight: 600; margin: .2rem 0; font-variant-numeric: tabular-nums; }
-    .val small { font-size: .8rem; color: var(--dim); font-weight: 400; margin-left: .2rem; }
-    canvas.spark { width: 100%; height: 38px; display: block; }
-
-    .row { display: grid; grid-template-columns: 1fr; gap: 1rem; }
-    @media (min-width: 860px) { .row { grid-template-columns: 1.5fr 1fr; align-items: start; } }
-    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: .9rem 1rem; }
-    .panel h2 { font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; color: var(--dim); margin: 0 0 .6rem; }
-
-    #log { height: min(46vh, 420px); min-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: .6rem; padding-right: .3rem; }
-    .msg { background: var(--panel2); border-left: 3px solid var(--accent); border-radius: 6px; padding: .5rem .7rem; }
-    .msg.you { border-left-color: #5a6a94; background: transparent; border: 1px solid var(--line); border-left-width: 3px; }
-    .msg.control { border-left-color: var(--control); }
-    .msg.system { border-left-color: var(--warn); font-size: .88rem; color: #d7c9a3; }
-    .msg.err { border-left-color: var(--bad); }
-    .msg .who { font-size: .72rem; color: var(--dim); margin-bottom: .15rem; font-variant-numeric: tabular-nums; }
-    .msg .text { white-space: pre-wrap; line-height: 1.45; }
-    .msg.err .text { color: #ff9aa5; }
-    .msg.pending .text { color: transparent; border-radius: 4px; min-height: 1.1rem; background: linear-gradient(90deg, #1b2542 25%, #26335c 50%, #1b2542 75%); background-size: 200% 100%; animation: shimmer 1.2s linear infinite; }
-    @keyframes shimmer { to { background-position: -200% 0; } }
-    .steps { list-style: none; margin: .5rem 0 0; padding: .4rem 0 0; border-top: 1px dashed var(--line); font-size: .76rem; color: var(--dim); }
-    .steps li { display: flex; gap: .45rem; align-items: baseline; padding: .1rem 0; }
-    .steps .n { width: 1.1rem; height: 1.1rem; border-radius: 50%; background: #1b2542; color: var(--text); font-size: .65rem; display: grid; place-items: center; flex: none; }
-    .steps code { color: #b8c8ff; }
-    .retry { margin-top: .4rem; padding: .25rem .7rem; font-size: .8rem; }
-
-    form { display: flex; gap: .5rem; margin-top: .7rem; }
-    input[type=text], select { flex: 1; min-width: 0; padding: .6rem; border-radius: 6px; border: 1px solid var(--line); background: #0a1020; color: inherit; font-size: 1rem; }
-    button { padding: .6rem 1rem; border: 0; border-radius: 6px; background: var(--accent); color: #fff; cursor: pointer; font-size: .95rem; }
-    button:disabled { opacity: .5; cursor: default; }
-    button.ghost { background: #1b2542; }
-    button.rec { background: #d9534f; }
-    .hint { color: var(--dim); font-size: .75rem; margin-top: .4rem; }
-    canvas#wave { width: 100%; height: 48px; display: block; margin-top: .5rem; }
-    label.chk { display: flex; gap: .4rem; align-items: center; color: var(--dim); font-size: .85rem; margin-top: .5rem; }
-
-    .alert { padding: .4rem 0; border-top: 1px solid var(--line); font-size: .9rem; }
-    .alert:first-child { border-top: 0; }
-    .alert b { color: var(--warn); text-transform: uppercase; font-size: .72rem; margin-right: .4rem; }
-    .alert b.critical { color: var(--bad); }
-    .none { color: var(--dim); }
-    .demo { display: flex; gap: .5rem; margin-top: .6rem; flex-wrap: wrap; }
-    #demoStatus { color: var(--dim); font-size: .82rem; margin-top: .5rem; min-height: 1.2rem; }
-    .side { display: grid; gap: 1rem; }
-
-    dialog { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 12px; padding: 1rem; width: min(680px, 94vw); }
-    dialog::backdrop { background: rgba(3, 6, 14, .72); }
-    .dhead { display: flex; align-items: center; gap: .6rem; margin-bottom: .6rem; }
-    .dhead h2 { margin: 0; font-size: 1.05rem; flex: 1; }
-    canvas#dChart { width: 100%; height: 240px; display: block; background: #0a1020; border-radius: 8px; }
-    dl.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: .6rem; margin: .8rem 0 0; }
-    dl.stats div { background: var(--panel2); border-radius: 6px; padding: .45rem .6rem; }
-    dl.stats dt { font-size: .7rem; color: var(--dim); } dl.stats dd { margin: .1rem 0 0; font-variant-numeric: tabular-nums; font-weight: 600; }
-
-    @media (max-width: 520px) {
-      header { gap: .3rem 1rem; } main { padding: .6rem; }
-      #grid { grid-template-columns: repeat(2, 1fr); gap: .5rem; } .val { font-size: 1.25rem; }
-      #log { height: 50vh; }
-    }
-    @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
-  </style>
+  <link rel="stylesheet" href="/static/space.css">
 </head>
 <body>
-  <header>
-    <h1>Astronaut Copilot</h1>
-    <span class="meta" id="mission">--</span>
-    <span class="meta">MET <span id="met">--:--:--</span></span>
-    <span class="meta">Crew <span id="crew">-</span></span>
+  <canvas id="stars" aria-hidden="true"></canvas>
+  <div id="progress" aria-hidden="true"></div>
+
+  <nav id="nav" aria-label="Sections">
+    <a class="brand" href="#hero">ASTRONAUT COPILOT</a>
+    <div class="links">
+      <a href="#hero" data-s="hero" class="active">Mission</a>
+      <a href="#flight" data-s="flight">Flight path</a>
+      <a href="#telemetry" data-s="telemetry">Telemetry</a>
+      <a href="#console" data-s="console">Console</a>
+    </div>
     <span class="spacer"></span>
+    <span class="meta">MET <span id="met">--:--:--</span></span>
     <span class="badge" id="status">NOMINAL</span>
-  </header>
+  </nav>
+  <div id="banner" role="alert"></div>
 
   <main>
-    <div id="banner" role="alert"></div>
-    <section id="grid" aria-label="Telemetry. Select a card for details."></section>
-
-    <div class="row">
-      <section class="panel" aria-label="Copilot conversation">
-        <h2>Copilot</h2>
-        <div id="log" role="log" aria-live="polite" tabindex="0">
-          <div class="msg system"><div class="text">Ask by typing or press M to talk. Select a telemetry card for its detail chart, or run the demo scenario.</div></div>
-        </div>
-        <form id="form">
-          <input type="text" id="q" aria-label="Ask the copilot" placeholder="e.g. How is the cabin air?" autocomplete="off" required>
-          <button id="mic" type="button" class="ghost" aria-pressed="false" title="Speak (M)">Mic</button>
-          <button id="ask" type="submit">Ask</button>
-        </form>
-        <div class="hint" id="micStatus" aria-live="polite">Press M to talk · Enter to send</div>
-        <canvas id="wave" aria-hidden="true"></canvas>
-        <label class="chk"><input type="checkbox" id="announce" checked> Announce new anomalies by voice</label>
-      </section>
-
-      <div class="side">
-        <section class="panel" aria-label="Alerts">
-          <h2>Alerts</h2>
-          <div id="alerts"><span class="none">None</span></div>
-        </section>
-        <section class="panel" aria-label="Demo controls">
-          <h2>Demo</h2>
-          <div class="demo">
-            <button id="demo" type="button">Run scenario</button>
-            <button id="demoStop" type="button" class="ghost" hidden>Stop</button>
-          </div>
-          <div id="demoStatus" aria-live="polite"></div>
-          <div class="demo">
-            <select id="faultMetric" aria-label="Metric to fault"></select>
-            <button id="fault" class="ghost" type="button">Inject fault</button>
-          </div>
-        </section>
+    <section id="hero" aria-label="Mission overview">
+      <p class="eyebrow"><span id="mission">--</span> · Crew <span id="crew">-</span></p>
+      <h1 id="title" data-text="Astronaut Copilot">Astronaut Copilot</h1>
+      <p class="tagline">A voice copilot that watches your spacecraft's telemetry, catches anomalies, and talks you through them.</p>
+      <div class="rings" role="group" aria-label="Key vitals">
+        <figure class="ring" id="ring-o2" data-state="ok"><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="trk" cx="60" cy="60" r="50"/><circle class="val" cx="60" cy="60" r="50" transform="rotate(-90 60 60)" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/></svg><div class="num"><b>--</b><small>%</small></div><figcaption>Cabin O2</figcaption></figure>
+        <figure class="ring" id="ring-battery" data-state="ok"><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="trk" cx="60" cy="60" r="50"/><circle class="val" cx="60" cy="60" r="50" transform="rotate(-90 60 60)" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/></svg><div class="num"><b>--</b><small>%</small></div><figcaption>Battery</figcaption></figure>
+        <figure class="ring" id="ring-fuel" data-state="ok"><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="trk" cx="60" cy="60" r="50"/><circle class="val" cx="60" cy="60" r="50" transform="rotate(-90 60 60)" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/></svg><div class="num"><b>--</b><small>%</small></div><figcaption>Fuel</figcaption></figure>
       </div>
-    </div>
+      <div class="ctas">
+        <button id="ctaDemo" type="button" class="glow-btn">Run scenario</button>
+        <button id="ctaTalk" type="button" class="ghost">Talk to copilot</button>
+      </div>
+      <a class="scroll-cue" href="#flight" aria-label="Scroll to the flight path"><span></span></a>
+    </section>
+
+    <section id="flight" aria-label="How it works: flight path">
+      <div class="stage" id="stage" data-phase="0">
+        <svg id="scene" viewBox="0 0 1000 560" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+          <defs>
+            <radialGradient id="gEarth" cx="35%" cy="35%"><stop offset="0" stop-color="#8fbaff"/><stop offset=".6" stop-color="#2f62d6"/><stop offset="1" stop-color="#0d2a6b"/></radialGradient>
+            <radialGradient id="gMoon" cx="35%" cy="35%"><stop offset="0" stop-color="#f4f4f7"/><stop offset="1" stop-color="#868896"/></radialGradient>
+            <radialGradient id="gGlow"><stop offset="0" stop-color="#5b86ff" stop-opacity=".45"/><stop offset="1" stop-color="#5b86ff" stop-opacity="0"/></radialGradient>
+          </defs>
+          <g id="earth" class="body" style="transform-origin:150px 420px"><circle cx="150" cy="420" r="150" fill="url(#gGlow)"/><circle cx="150" cy="420" r="84" fill="url(#gEarth)"/></g>
+          <g id="moon" class="body" style="transform-origin:860px 150px"><circle cx="860" cy="150" r="80" fill="url(#gGlow)" opacity=".5"/><circle cx="860" cy="150" r="40" fill="url(#gMoon)"/><circle cx="848" cy="140" r="6" fill="#6f7180" opacity=".5"/><circle cx="872" cy="162" r="9" fill="#6f7180" opacity=".4"/></g>
+          <path id="track" class="track" d="M150 420 C350 120 640 60 860 150" pathLength="1" style="stroke-dasharray:4 8"/>
+          <path id="trackDone" class="done" d="M150 420 C350 120 640 60 860 150" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/>
+          <line id="signal" x1="150" y1="420" x2="150" y2="420"/>
+          <g id="craft" transform="translate(150 420)">
+            <g id="alertRing"><circle r="24"/></g>
+            <g id="okRing"><circle r="24"/><path d="M-9 1 l6 7 l12 -13"/></g>
+            <path class="flame" d="M-14 0 L-30 -6 L-24 0 L-30 6Z"/>
+            <path class="hull" d="M-14 -8 L10 -8 L22 0 L10 8 L-14 8Z"/>
+          </g>
+        </svg>
+        <div class="hud glass" id="hud">
+          <div class="phase-label">Phase <b id="phaseNum">1</b> of 4 · scroll to advance</div>
+          <h2 id="phaseTitle">Nominal operations</h2>
+          <p id="phaseText"></p>
+          <div class="chip" id="phaseChip"></div>
+          <div class="dots" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+          <div class="dist">Illustrative path · <b id="dist">0 km</b> from Earth</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="telemetry" aria-label="Telemetry. Select a card for details.">
+      <div class="sec-head reveal"><h2>Live telemetry</h2><p>Nine streams at 1 Hz. Select a card for its two-minute chart, nominal limits and anomaly points.</p></div>
+      <div class="group reveal"><h3>Cabin</h3><div class="cards" id="grid-cabin"></div></div>
+      <div class="group reveal"><h3>Power</h3><div class="cards" id="grid-power"></div></div>
+      <div class="group reveal"><h3>Propulsion</h3><div class="cards" id="grid-propulsion"></div></div>
+      <div class="group reveal"><h3>Thermal</h3><div class="cards" id="grid-thermal"></div></div>
+    </section>
+
+    <section id="console" aria-label="Copilot console">
+      <div class="sec-head reveal"><h2>Copilot console</h2><p>Type, or press M to talk. Run the scenario to watch detection, announcement and tool calls end to end.</p></div>
+      <div class="row reveal">
+        <section class="panel glass" aria-label="Copilot conversation">
+          <h2>Copilot</h2>
+          <div id="log" role="log" aria-live="polite" tabindex="0">
+            <div class="msg system"><div class="text">Ask by typing or press M to talk. Select a telemetry card for its detail chart, or run the demo scenario.</div></div>
+          </div>
+          <form id="form">
+            <input type="text" id="q" aria-label="Ask the copilot" placeholder="e.g. How is the cabin air?" autocomplete="off" required>
+            <button id="mic" type="button" class="ghost" aria-pressed="false" title="Speak (M)">Mic</button>
+            <button id="ask" type="submit">Ask</button>
+          </form>
+          <div class="hint" id="micStatus" aria-live="polite">Press M to talk · Enter to send</div>
+          <canvas id="wave" aria-hidden="true"></canvas>
+          <label class="chk"><input type="checkbox" id="announce" checked> Announce new anomalies by voice</label>
+        </section>
+
+        <div class="side">
+          <section class="panel glass" aria-label="Alerts">
+            <h2>Alerts</h2>
+            <div id="alerts"><span class="none">None</span></div>
+          </section>
+          <section class="panel glass" aria-label="Demo controls">
+            <h2>Demo</h2>
+            <div class="demo">
+              <button id="demo" type="button">Run scenario</button>
+              <button id="demoStop" type="button" class="ghost" hidden>Stop</button>
+            </div>
+            <div id="demoStatus" aria-live="polite"></div>
+            <div class="demo">
+              <select id="faultMetric" aria-label="Metric to fault"></select>
+              <button id="fault" class="ghost" type="button">Inject fault</button>
+            </div>
+          </section>
+        </div>
+      </div>
+    </section>
   </main>
+
+  <footer>Simulated telemetry · Gemini function calling · ElevenLabs voices</footer>
 
   <dialog id="detail" aria-labelledby="dTitle">
     <div class="dhead">
@@ -163,6 +139,7 @@
   </dialog>
 
   <script src="/static/vendor/anime.umd.min.js"></script>
+  <script src="/static/vendor/motion.js"></script>
   <script>
     const $ = (id) => document.getElementById(id);
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -188,6 +165,8 @@
     const series = {}, flags = {}, cards = {};
     let nominal = {};
     let openPath = null;
+    let latest = null;
+    window.cockpit = { get latest() { return latest; }, cards, series, METRICS };
     const get = (t, path) => path.split(".").reduce((o, k) => o?.[k], t);
     const fmt = (path, v) => v.toFixed(METRICS[path][2]);
     const outOfRange = (path, v) => { const n = nominal[path]; return !!n && (v < n[0] || v > n[1]); };
@@ -199,19 +178,18 @@
       el.className = "card";
       el.tabIndex = 0;
       el.setAttribute("role", "button");
-      el.innerHTML = `<div class="top"><span class="light"></span><span class="lbl"></span><span class="tag"></span></div>
+      el.innerHTML = `<div class="ci"><div class="top"><span class="light"></span><span class="lbl"></span><span class="tag"></span></div>
         <div class="val"><span class="v">--</span><small></small></div>
-        <canvas class="spark" aria-hidden="true"></canvas>`;
+        <canvas class="spark" aria-hidden="true"></canvas></div>`;
       el.querySelector(".lbl").textContent = label;
       el.querySelector("small").textContent = unit;
       el.setAttribute("aria-label", `${label}, show details`);
       el.addEventListener("click", () => openDetail(path));
       el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openDetail(path); } });
-      $("grid").appendChild(el);
+      $("grid-" + path.split(".")[0]).appendChild(el);
       cards[path] = { el, v: el.querySelector(".v"), tag: el.querySelector(".tag"), cv: el.querySelector("canvas"), state: "ok" };
       $("faultMetric").add(new Option(label, path));
     }
-    animate(".card", { opacity: [0, 1], translateY: [12, 0], delay: window.anime ? anime.stagger(45) : 0, duration: 450, ease: "outQuad" });
 
     // ---- charts
     function plot(cv, path, big) {
@@ -343,6 +321,7 @@
       $("mission").textContent = t.mission;
       $("met").textContent = t.mission_elapsed_time;
       $("crew").textContent = t.crew;
+      latest = t;
       const bad = new Map((t.anomalies || []).map((a) => [a.metric, a]));
       for (const path of Object.keys(METRICS)) {
         const v = get(t, path), c = cards[path];
@@ -377,6 +356,7 @@
       }
       if (!box.children.length) box.innerHTML = '<span class="none">None</span>';
       onAnomalies(bad);
+      document.dispatchEvent(new CustomEvent("telemetry", { detail: t }));
     }
 
     function onAnomalies(bad) {
@@ -604,5 +584,6 @@
       toggleMic();
     });
   </script>
+  <script src="/static/space.js"></script>
 </body>
 </html>
