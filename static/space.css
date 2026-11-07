@@ -3,7 +3,7 @@
 :root {
   --bg: #050608; --panel: #0e1013; --panel2: #15181c; --line: #2a2d33; --text: #f4f5f7; --dim: #a3a8b3;
   --red: #fc3d21; --ok: #3ddc97; --warn: #ffb020; --bad: #ff5a4a; --accent: #4f8de8; --control: #b9a3ff;
-  --nav-h: 56px; --strip-h: 26px; --phase: var(--ok);
+  --nav-h: 56px; --phase: var(--ok);
 }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; scroll-padding-top: 90px; }
@@ -36,7 +36,6 @@ a { color: inherit; }
 
 /* ---- shared */
 section { position: relative; }
-.wrap { max-width: 1180px; margin: 0 auto; padding: 0 1.2rem; }
 .sec-head { max-width: 1180px; margin: 0 auto 1.6rem; padding: 0 1.2rem 1rem; display: flex; flex-wrap: wrap; align-items: end; gap: .4rem 2rem; border-bottom: 1px solid var(--line); }
 .sec-head h2 { font-size: clamp(1.6rem, 3.6vw, 2.3rem); font-weight: 800; letter-spacing: -.01em; }
 .sec-head p { color: var(--dim); margin: 0; flex: 1 1 280px; max-width: 520px; }

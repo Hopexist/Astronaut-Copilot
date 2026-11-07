@@ -12,7 +12,7 @@
   /* ---------- 1. starfield: parallax + twinkle + scroll-velocity streaks ---------- */
   guard(() => {
     const cv = $("stars"), ctx = cv.getContext("2d");
-    let W = 0, H = 0, dpr = 1, stars = [], vel = 0, lastY = scrollY;
+    let W = 0, H = 0, dpr = 1, stars = [];
     const seed = () => {
       stars = Array.from({ length: Math.round((innerWidth * innerHeight) / 8000) }, () =>
         ({ x: Math.random(), y: Math.random(), z: Math.random() * 0.9 + 0.1, p: Math.random() * 6.28 }));
@@ -24,7 +24,6 @@
     };
     function draw(t) {
       const y = scrollY;
-      vel += ((y - lastY) - vel) * 0.15; lastY = y;
       ctx.clearRect(0, 0, W, H);
       for (const s of stars) {
         const py = (((s.y * H - y * dpr * s.z * 0.25) % H) + H) % H, px = s.x * W;

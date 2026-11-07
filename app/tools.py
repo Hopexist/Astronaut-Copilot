@@ -1,4 +1,6 @@
 """Functions Gemini can call. Docstrings and type hints are the tool schema."""
+import re
+
 from app import telemetry as sim
 from app.news import get_news
 
@@ -98,7 +100,8 @@ def get_mission_news(topic: str = "") -> dict:
     data = get_news()
     words = topic.lower().split()
     text = lambda i: i.get("detail") or i["summary"]
-    score = lambda i: sum(w in (i["title"] + " " + text(i)).lower() for w in words)
+    # whole words only, so "Artemis II" does not also match "Artemis III"
+    score = lambda i: sum(bool(re.search(rf"\b{re.escape(w)}\b", (i["title"] + " " + text(i)).lower())) for w in words)
     ranked = sorted(data["items"], key=score, reverse=True)  # stable: ties keep newest first
     return {
         "source": "NASA Artemis news feed",

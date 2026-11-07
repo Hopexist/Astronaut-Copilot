@@ -15,6 +15,8 @@ questions with Gemini, speaks answers with ElevenLabs.
 ## Commands
 - Run: `uvicorn app.main:app --reload`
 - Install: `pip install -r requirements.txt`
+- Test: `python -m unittest discover -s tests -v` (run from the project root; stdlib only, no pytest)
+- Paid endpoints (/api/ask, /api/transcribe) are capped (500-char question, 2 MB audio) and rate-limited per client in app/main.py
 
 ## Structure
 - app/main.py (routes), app/gemini.py, app/voice.py, app/telemetry.py

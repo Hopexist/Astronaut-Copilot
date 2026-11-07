@@ -52,7 +52,7 @@
         <p>Recent stories from NASA's Artemis coverage.</p>
         <a class="more-link" href="https://www.nasa.gov/missions/artemis/" target="_blank" rel="noopener noreferrer">All Artemis news on nasa.gov<span class="sr"> (opens in a new tab)</span></a>
       </div>
-      <div class="news-grid" id="newsGrid" aria-live="polite">
+      <div class="news-grid" id="newsGrid">
         <div class="story feature skeleton" aria-hidden="true"></div>
         <div class="story skeleton" aria-hidden="true"></div>
         <div class="story skeleton" aria-hidden="true"></div>
@@ -125,7 +125,7 @@
             <div class="msg system"><div class="text">Type a question or press M to talk. Try "How is the cabin air?" or "What is the latest on Artemis III?"</div></div>
           </div>
           <form id="form">
-            <input type="text" id="q" aria-label="Ask the copilot" placeholder="e.g. How is the cabin air?" autocomplete="off" required>
+            <input type="text" id="q" aria-label="Ask the copilot" placeholder="e.g. How is the cabin air?" autocomplete="off" maxlength="500" required>
             <button id="mic" type="button" class="ghost" aria-pressed="false" title="Speak (M)">Mic</button>
             <button id="ask" type="submit">Ask</button>
           </form>
@@ -501,7 +501,11 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ question, voice }),
         });
-        const data = await res.json();
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          const why = typeof data.detail === "string" ? data.detail : res.status === 422 ? "That question is too long (500 characters at most)." : `Request failed (${res.status}).`;
+          msg.set(why, [], true, retry); return;
+        }
         if (data.error) { msg.set(data.error, [], true, retry); return; }
         msg.set(data.answer + (data.audio ? "" : "\n(audio unavailable)"), data.tools);
         if (data.audio) playAudio(data.audio);
@@ -591,8 +595,8 @@
         micStatus("Transcribing...");
         try {
           const res = await fetch("/api/transcribe", { method: "POST", body: new Blob(chunks) });
-          const data = await res.json();
-          if (data.error || !data.text) { micStatus(data.error || "Didn't catch that. Try again."); return; }
+          const data = await res.json().catch(() => ({}));
+          if (data.error || !data.text) { micStatus(data.error || (typeof data.detail === "string" ? data.detail : "Didn't catch that. Try again.")); return; }
           micStatus("Press M to talk · Enter to send");
           ask(data.text);
         } catch (e) {

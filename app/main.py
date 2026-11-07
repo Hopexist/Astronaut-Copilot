@@ -1,11 +1,14 @@
 import asyncio
 import base64
+import time
+from collections import defaultdict, deque
 from contextlib import asynccontextmanager
+from typing import Literal
 
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse
+from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app import telemetry as sim
 from app.gemini import ask_gemini, load_telemetry
@@ -31,9 +34,29 @@ app = FastAPI(title="Astronaut Copilot", lifespan=lifespan)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
+MAX_AUDIO_BYTES = 2_000_000  # about a minute of browser-recorded speech
+RATE_LIMIT, RATE_WINDOW = 30, 60.0  # paid endpoints: requests per window, per client
+_hits: dict[str, deque] = defaultdict(deque)
+
+
+def rate_limit(request: Request) -> None:
+    # shortcut: in memory, per process, keyed on the direct peer address. Behind a reverse proxy
+    # every visitor shares one bucket; switch to the forwarded address when deploying behind one.
+    now = time.monotonic()
+    hits = _hits[request.client.host if request.client else "?"]
+    while hits and now - hits[0] > RATE_WINDOW:
+        hits.popleft()
+    if len(hits) >= RATE_LIMIT:
+        raise HTTPException(429, "Too many requests. Wait a minute and try again.")
+    hits.append(now)
+    if len(_hits) > 1000:  # forget clients that have gone quiet
+        for key in [k for k, v in _hits.items() if not v or now - v[-1] > RATE_WINDOW]:
+            del _hits[key]
+
+
 class Question(BaseModel):
-    question: str
-    voice: str = "copilot"  # or "control" for Mission Control
+    question: str = Field(min_length=1, max_length=500)
+    voice: Literal["copilot", "control"] = "copilot"  # "control" = Mission Control
 
 
 class Fault(BaseModel):
@@ -79,15 +102,20 @@ def fault(body: Fault) -> dict:
     return {"injected": body.metric}
 
 
-@app.post("/api/transcribe")
-async def transcribe_audio(request: Request) -> dict:
+@app.post("/api/transcribe", dependencies=[Depends(rate_limit)])
+async def transcribe_audio(request: Request):
+    audio = bytearray()
+    async for chunk in request.stream():  # stop reading as soon as the limit is passed
+        audio += chunk
+        if len(audio) > MAX_AUDIO_BYTES:
+            return JSONResponse({"text": "", "error": "Recording is too long. Keep it under a minute."}, status_code=413)
     try:
-        return {"text": transcribe(await request.body()), "error": None}
+        return {"text": transcribe(bytes(audio)), "error": None}
     except Exception as exc:
         return {"text": "", "error": f"Transcription failed: {exc}"}
 
 
-@app.post("/api/ask")
+@app.post("/api/ask", dependencies=[Depends(rate_limit)])
 def ask(body: Question) -> dict:
     try:
         answer, tools = ask_gemini(body.question)

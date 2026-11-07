@@ -217,13 +217,17 @@
   // the part whose lines are closest wins, so overlapping outlines still resolve to the nearer part.
   function pick(x, y) {
     let best = null, bestDist = Infinity;
+    const dists = {};
     for (const p of PARTS) {
       const pts = S.pp[p.id]; if (!pts || pts.length < 6) continue;
       let d = Infinity;
       for (let i = 0; i < pts.length; i += 2) d = Math.min(d, segDist(x, y, pts[i][0], pts[i][1], pts[i + 1][0], pts[i + 1][1]));
       if (d > 8 && !(d < 80 && inside(hull(pts), x, y))) continue;
+      dists[p.id] = d;
       if (d < bestDist) { best = p.id; bestDist = d; }
     }
+    // hysteresis: the part already under the pointer keeps it unless another is clearly closer
+    if (S.hover && dists[S.hover] !== undefined && dists[S.hover] <= bestDist + 4) return S.hover;
     return best;
   }
 
@@ -369,6 +373,7 @@
     parts: PARTS.map((p) => p.id), pick, select, setHover, setExplode, stateOf: (id) => stateOf(byId[id]),
     render() { step(); draw(); }, center: (id) => (S.bounds[id] ? [S.bounds[id].cx, S.bounds[id].cy] : null),
     points: (id) => S.pp[id], size: () => [S.W, S.H],
+    view(yaw, pitch) { S.yaw = yaw; S.pitch = pitch; S.vyaw = 0; },
     get selected() { return S.sel; }, get hovered() { return S.hover; }, get explode() { return S.explode; },
   };
 })();
