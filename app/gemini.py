@@ -27,17 +27,17 @@ def load_telemetry() -> dict:
     return snapshot()
 
 
-def _tool_names(response: types.GenerateContentResponse) -> list[str]:
-    names = []
+def _tool_calls(response: types.GenerateContentResponse) -> list[dict]:
+    calls = []
     for content in response.automatic_function_calling_history or []:
         for part in content.parts or []:
             if part.function_call:
-                names.append(part.function_call.name)
-    return names
+                calls.append({"name": part.function_call.name, "args": dict(part.function_call.args or {})})
+    return calls
 
 
-def ask_gemini(question: str) -> tuple[str, list[str]]:
-    """Return (answer, names of the tools Gemini called)."""
+def ask_gemini(question: str) -> tuple[str, list[dict]]:
+    """Return (answer, the tool calls Gemini made as {name, args})."""
     client = genai.Client(
         api_key=os.environ["GEMINI_API_KEY"],
         http_options=types.HttpOptions(timeout=30000),
@@ -53,4 +53,4 @@ def ask_gemini(question: str) -> tuple[str, list[str]]:
             ),
         ),
     )
-    return (response.text or "").strip(), _tool_names(response)
+    return (response.text or "").strip(), _tool_calls(response)

@@ -21,7 +21,7 @@ questions with Gemini, speaks answers with ElevenLabs.
   (live simulator + z-score anomaly detection), data/telemetry.json (baseline)
 - app/tools.py: Gemini function-calling tools (get_telemetry, get_trend, run_diagnostics, raise_alarm)
 - Demo: `POST /api/sim/fault {"metric": "cabin.co2_ppm"}` injects an anomaly
-- static/ (frontend)
+- static/ (frontend; static/vendor/anime.umd.min.js is vendored Anime.js 4.5.0, MIT, self-hosted so the demo needs no CDN)
 
 ## Conventions
 - Small functions, type hints, minimal comments

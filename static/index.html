@@ -5,10 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Astronaut Copilot</title>
   <style>
-    :root { --bg: #070b16; --panel: #0f1629; --line: #1f2a48; --text: #e6ecff; --dim: #8a97b8;
-            --ok: #3ddc97; --warn: #ffb020; --bad: #ff4d5e; --accent: #4f7cff; }
+    :root { --bg: #070b16; --panel: #0f1629; --panel2: #141c34; --line: #1f2a48; --text: #e6ecff; --dim: #93a0c2;
+            --ok: #3ddc97; --warn: #ffb020; --bad: #ff4d5e; --accent: #4f7cff; --control: #b48cff; }
     * { box-sizing: border-box; }
     body { margin: 0; font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); }
+    :focus-visible { outline: 2px solid #9db8ff; outline-offset: 2px; }
     header { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; align-items: baseline; padding: .8rem 1rem; border-bottom: 1px solid var(--line); }
     header h1 { font-size: 1.1rem; margin: 0; letter-spacing: .08em; text-transform: uppercase; }
     header .meta { color: var(--dim); font-size: .85rem; font-variant-numeric: tabular-nums; }
@@ -20,32 +21,79 @@
     #banner { display: none; padding: .7rem 1rem; border-radius: 8px; background: #3a141a; border: 1px solid var(--bad); }
     #banner.show { display: block; }
     #banner.conn { background: #3a2c10; border-color: var(--warn); }
-    #grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: .75rem; }
-    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: .7rem .8rem; }
+
+    #grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: .75rem; }
+    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: .7rem .8rem; cursor: pointer; transition: border-color .2s; }
+    .card:hover { border-color: #3a4a7a; }
+    .card.warn { border-color: var(--warn); }
     .card.bad { border-color: var(--bad); box-shadow: 0 0 0 1px var(--bad) inset; }
     .card .top { display: flex; align-items: center; gap: .45rem; color: var(--dim); font-size: .78rem; }
-    .light { width: .6rem; height: .6rem; border-radius: 50%; background: var(--ok); box-shadow: 0 0 6px var(--ok); }
+    .card .tag { margin-left: auto; font-size: .62rem; font-weight: 700; letter-spacing: .05em; }
+    .card.warn .tag { color: var(--warn); } .card.bad .tag { color: var(--bad); }
+    .light { width: .6rem; height: .6rem; border-radius: 50%; background: var(--ok); box-shadow: 0 0 6px var(--ok); flex: none; }
+    .card.warn .light { background: var(--warn); box-shadow: 0 0 6px var(--warn); }
     .card.bad .light { background: var(--bad); box-shadow: 0 0 8px var(--bad); animation: pulse 1s infinite; }
     @keyframes pulse { 50% { opacity: .35; } }
     .val { font-size: 1.6rem; font-weight: 600; margin: .2rem 0; font-variant-numeric: tabular-nums; }
     .val small { font-size: .8rem; color: var(--dim); font-weight: 400; margin-left: .2rem; }
     canvas.spark { width: 100%; height: 38px; display: block; }
+
     .row { display: grid; grid-template-columns: 1fr; gap: 1rem; }
-    @media (min-width: 800px) { .row { grid-template-columns: 1.4fr 1fr; } }
+    @media (min-width: 860px) { .row { grid-template-columns: 1.5fr 1fr; align-items: start; } }
     .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: .9rem 1rem; }
     .panel h2 { font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; color: var(--dim); margin: 0 0 .6rem; }
-    form { display: flex; gap: .5rem; }
-    input, select { flex: 1; min-width: 0; padding: .6rem; border-radius: 6px; border: 1px solid var(--line); background: #0a1020; color: inherit; font-size: 1rem; }
+
+    #log { height: min(46vh, 420px); min-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: .6rem; padding-right: .3rem; }
+    .msg { background: var(--panel2); border-left: 3px solid var(--accent); border-radius: 6px; padding: .5rem .7rem; }
+    .msg.you { border-left-color: #5a6a94; background: transparent; border: 1px solid var(--line); border-left-width: 3px; }
+    .msg.control { border-left-color: var(--control); }
+    .msg.system { border-left-color: var(--warn); font-size: .88rem; color: #d7c9a3; }
+    .msg.err { border-left-color: var(--bad); }
+    .msg .who { font-size: .72rem; color: var(--dim); margin-bottom: .15rem; font-variant-numeric: tabular-nums; }
+    .msg .text { white-space: pre-wrap; line-height: 1.45; }
+    .msg.err .text { color: #ff9aa5; }
+    .msg.pending .text { color: transparent; border-radius: 4px; min-height: 1.1rem; background: linear-gradient(90deg, #1b2542 25%, #26335c 50%, #1b2542 75%); background-size: 200% 100%; animation: shimmer 1.2s linear infinite; }
+    @keyframes shimmer { to { background-position: -200% 0; } }
+    .steps { list-style: none; margin: .5rem 0 0; padding: .4rem 0 0; border-top: 1px dashed var(--line); font-size: .76rem; color: var(--dim); }
+    .steps li { display: flex; gap: .45rem; align-items: baseline; padding: .1rem 0; }
+    .steps .n { width: 1.1rem; height: 1.1rem; border-radius: 50%; background: #1b2542; color: var(--text); font-size: .65rem; display: grid; place-items: center; flex: none; }
+    .steps code { color: #b8c8ff; }
+    .retry { margin-top: .4rem; padding: .25rem .7rem; font-size: .8rem; }
+
+    form { display: flex; gap: .5rem; margin-top: .7rem; }
+    input[type=text], select { flex: 1; min-width: 0; padding: .6rem; border-radius: 6px; border: 1px solid var(--line); background: #0a1020; color: inherit; font-size: 1rem; }
     button { padding: .6rem 1rem; border: 0; border-radius: 6px; background: var(--accent); color: #fff; cursor: pointer; font-size: .95rem; }
+    button:disabled { opacity: .5; cursor: default; }
     button.ghost { background: #1b2542; }
-    #answer { margin-top: .8rem; min-height: 3.2rem; white-space: pre-wrap; line-height: 1.45; }
-    #answer.err { color: var(--bad); }
-    canvas#wave { width: 100%; height: 56px; display: block; margin-top: .6rem; }
+    button.rec { background: #d9534f; }
+    .hint { color: var(--dim); font-size: .75rem; margin-top: .4rem; }
+    canvas#wave { width: 100%; height: 48px; display: block; margin-top: .5rem; }
+    label.chk { display: flex; gap: .4rem; align-items: center; color: var(--dim); font-size: .85rem; margin-top: .5rem; }
+
     .alert { padding: .4rem 0; border-top: 1px solid var(--line); font-size: .9rem; }
-    .alert:first-of-type { border-top: 0; }
+    .alert:first-child { border-top: 0; }
     .alert b { color: var(--warn); text-transform: uppercase; font-size: .72rem; margin-right: .4rem; }
-    .demo { display: flex; gap: .5rem; margin-top: .8rem; }
-    label.chk { display: flex; gap: .4rem; align-items: center; color: var(--dim); font-size: .85rem; margin-top: .6rem; }
+    .alert b.critical { color: var(--bad); }
+    .none { color: var(--dim); }
+    .demo { display: flex; gap: .5rem; margin-top: .6rem; flex-wrap: wrap; }
+    #demoStatus { color: var(--dim); font-size: .82rem; margin-top: .5rem; min-height: 1.2rem; }
+    .side { display: grid; gap: 1rem; }
+
+    dialog { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 12px; padding: 1rem; width: min(680px, 94vw); }
+    dialog::backdrop { background: rgba(3, 6, 14, .72); }
+    .dhead { display: flex; align-items: center; gap: .6rem; margin-bottom: .6rem; }
+    .dhead h2 { margin: 0; font-size: 1.05rem; flex: 1; }
+    canvas#dChart { width: 100%; height: 240px; display: block; background: #0a1020; border-radius: 8px; }
+    dl.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: .6rem; margin: .8rem 0 0; }
+    dl.stats div { background: var(--panel2); border-radius: 6px; padding: .45rem .6rem; }
+    dl.stats dt { font-size: .7rem; color: var(--dim); } dl.stats dd { margin: .1rem 0 0; font-variant-numeric: tabular-nums; font-weight: 600; }
+
+    @media (max-width: 520px) {
+      header { gap: .3rem 1rem; } main { padding: .6rem; }
+      #grid { grid-template-columns: repeat(2, 1fr); gap: .5rem; } .val { font-size: 1.25rem; }
+      #log { height: 50vh; }
+    }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
   </style>
 </head>
 <body>
@@ -60,35 +108,70 @@
 
   <main>
     <div id="banner" role="alert"></div>
-    <section id="grid" aria-label="Telemetry"></section>
+    <section id="grid" aria-label="Telemetry. Select a card for details."></section>
 
     <div class="row">
-      <section class="panel">
+      <section class="panel" aria-label="Copilot conversation">
         <h2>Copilot</h2>
+        <div id="log" role="log" aria-live="polite" tabindex="0">
+          <div class="msg system"><div class="text">Ask by typing or press M to talk. Select a telemetry card for its detail chart, or run the demo scenario.</div></div>
+        </div>
         <form id="form">
-          <input id="q" placeholder="Ask about the mission, e.g. How is the cabin air?" autocomplete="off" required>
-          <button id="mic" type="button" class="ghost" title="Speak">Mic</button>
-          <button type="submit">Ask</button>
+          <input type="text" id="q" aria-label="Ask the copilot" placeholder="e.g. How is the cabin air?" autocomplete="off" required>
+          <button id="mic" type="button" class="ghost" aria-pressed="false" title="Speak (M)">Mic</button>
+          <button id="ask" type="submit">Ask</button>
         </form>
-        <div id="answer"></div>
-        <div id="tools" style="margin-top:.4rem;font-size:.75rem;color:var(--dim)"></div>
-        <canvas id="wave"></canvas>
-        <label class="chk"><input type="checkbox" id="announce" checked style="flex:none"> Announce new anomalies by voice</label>
+        <div class="hint" id="micStatus" aria-live="polite">Press M to talk · Enter to send</div>
+        <canvas id="wave" aria-hidden="true"></canvas>
+        <label class="chk"><input type="checkbox" id="announce" checked> Announce new anomalies by voice</label>
       </section>
 
-      <section class="panel">
-        <h2>Alerts</h2>
-        <div id="alerts"><span style="color:var(--dim)">None</span></div>
-        <div class="demo">
-          <select id="faultMetric" aria-label="Metric to fault"></select>
-          <button id="fault" class="ghost" type="button">Inject fault</button>
-        </div>
-      </section>
+      <div class="side">
+        <section class="panel" aria-label="Alerts">
+          <h2>Alerts</h2>
+          <div id="alerts"><span class="none">None</span></div>
+        </section>
+        <section class="panel" aria-label="Demo controls">
+          <h2>Demo</h2>
+          <div class="demo">
+            <button id="demo" type="button">Run scenario</button>
+            <button id="demoStop" type="button" class="ghost" hidden>Stop</button>
+          </div>
+          <div id="demoStatus" aria-live="polite"></div>
+          <div class="demo">
+            <select id="faultMetric" aria-label="Metric to fault"></select>
+            <button id="fault" class="ghost" type="button">Inject fault</button>
+          </div>
+        </section>
+      </div>
     </div>
   </main>
 
+  <dialog id="detail" aria-labelledby="dTitle">
+    <div class="dhead">
+      <h2 id="dTitle"></h2>
+      <button id="dClose" type="button" class="ghost" aria-label="Close details">Close</button>
+    </div>
+    <canvas id="dChart" role="img" aria-label="Chart of the last two minutes"></canvas>
+    <dl class="stats">
+      <div><dt>Current</dt><dd id="sCur"></dd></div>
+      <div><dt>Min (2 min)</dt><dd id="sMin"></dd></div>
+      <div><dt>Max (2 min)</dt><dd id="sMax"></dd></div>
+      <div><dt>Nominal range</dt><dd id="sNom"></dd></div>
+      <div><dt>Status</dt><dd id="sState"></dd></div>
+    </dl>
+  </dialog>
+
+  <script src="/static/vendor/anime.umd.min.js"></script>
   <script>
     const $ = (id) => document.getElementById(id);
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // Anime.js is optional polish: if it failed to load or throws, the UI still works.
+    const animate = (targets, params) => {
+      if (reduceMotion || !window.anime) return;
+      try { anime.animate(targets, params); } catch (_) {}
+    };
 
     const METRICS = {
       "cabin.o2_percent": ["Cabin O2", "%", 2],
@@ -102,46 +185,146 @@
       "thermal.radiator_temp_c": ["Radiator temp", "°C", 1],
     };
     const MAXPTS = 120;
-    const series = {};
-    const cards = {};
-
+    const series = {}, flags = {}, cards = {};
+    let nominal = {};
+    let openPath = null;
     const get = (t, path) => path.split(".").reduce((o, k) => o?.[k], t);
+    const fmt = (path, v) => v.toFixed(METRICS[path][2]);
+    const outOfRange = (path, v) => { const n = nominal[path]; return !!n && (v < n[0] || v > n[1]); };
 
-    // ---- build cards
+    // ---- cards
     for (const [path, [label, unit]] of Object.entries(METRICS)) {
-      series[path] = [];
+      series[path] = []; flags[path] = [];
       const el = document.createElement("div");
       el.className = "card";
-      el.innerHTML = `<div class="top"><span class="light"></span>${label}</div>
-        <div class="val"><span class="v">--</span><small>${unit}</small></div>
-        <canvas class="spark"></canvas>`;
+      el.tabIndex = 0;
+      el.setAttribute("role", "button");
+      el.innerHTML = `<div class="top"><span class="light"></span><span class="lbl"></span><span class="tag"></span></div>
+        <div class="val"><span class="v">--</span><small></small></div>
+        <canvas class="spark" aria-hidden="true"></canvas>`;
+      el.querySelector(".lbl").textContent = label;
+      el.querySelector("small").textContent = unit;
+      el.setAttribute("aria-label", `${label}, show details`);
+      el.addEventListener("click", () => openDetail(path));
+      el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openDetail(path); } });
       $("grid").appendChild(el);
-      cards[path] = { el, v: el.querySelector(".v"), cv: el.querySelector("canvas") };
-      const opt = new Option(label, path);
-      $("faultMetric").add(opt);
+      cards[path] = { el, v: el.querySelector(".v"), tag: el.querySelector(".tag"), cv: el.querySelector("canvas"), state: "ok" };
+      $("faultMetric").add(new Option(label, path));
     }
+    animate(".card", { opacity: [0, 1], translateY: [12, 0], delay: window.anime ? anime.stagger(45) : 0, duration: 450, ease: "outQuad" });
 
-    function spark(path, bad) {
-      const { cv } = cards[path];
-      const dpr = window.devicePixelRatio || 1;
-      const w = cv.clientWidth, h = cv.clientHeight;
-      if (cv.width !== w * dpr) { cv.width = w * dpr; cv.height = h * dpr; }
+    // ---- charts
+    function plot(cv, path, big) {
+      const dpr = window.devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight;
+      if (!w || !h) return;
+      if (cv.width !== Math.round(w * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
       const ctx = cv.getContext("2d");
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, w, h);
-      const d = series[path];
+      const d = series[path], f = flags[path];
       if (d.length < 2) return;
       let lo = Math.min(...d), hi = Math.max(...d);
-      if (hi - lo < 1e-9) { lo -= 1; hi += 1; }
+      const span = Math.max(hi - lo, Math.abs(hi) * 0.002, 1e-6);
+      const lims = [];
+      if (big && nominal[path]) {
+        for (const L of nominal[path]) if (L >= lo - span * 2 && L <= hi + span * 2) { lims.push(L); lo = Math.min(lo, L); hi = Math.max(hi, L); }
+      }
+      const pad = (hi - lo) * 0.08 || 1; lo -= pad; hi += pad;
+      const left = big ? 50 : 0, right = big ? 8 : 0, top = big ? 10 : 3, bottom = big ? 20 : 3;
+      const X = (i) => left + ((i + MAXPTS - d.length) / (MAXPTS - 1)) * (w - left - right);
+      const Y = (v) => top + (1 - (v - lo) / (hi - lo)) * (h - top - bottom);
+      if (big) {
+        ctx.font = "11px system-ui"; ctx.fillStyle = "#93a0c2"; ctx.textAlign = "right";
+        ctx.fillText(hi.toFixed(METRICS[path][2]), left - 6, top + 8);
+        ctx.fillText(lo.toFixed(METRICS[path][2]), left - 6, h - bottom);
+        ctx.textAlign = "left"; ctx.fillText("-2 min", left, h - 4);
+        ctx.textAlign = "right"; ctx.fillText("now", w - right, h - 4);
+        ctx.setLineDash([5, 4]); ctx.strokeStyle = "#ffb020"; ctx.lineWidth = 1;
+        for (const L of lims) { ctx.beginPath(); ctx.moveTo(left, Y(L)); ctx.lineTo(w - right, Y(L)); ctx.stroke(); }
+        ctx.setLineDash([]);
+      }
+      const bad = cards[path].state === "bad";
       ctx.beginPath();
-      d.forEach((v, i) => {
-        const x = (i / (MAXPTS - 1)) * w + (w - (d.length - 1) / (MAXPTS - 1) * w);
-        const y = h - 3 - ((v - lo) / (hi - lo)) * (h - 6);
-        i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
-      });
-      ctx.strokeStyle = bad ? "#ff4d5e" : "#4f7cff";
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
+      d.forEach((v, i) => (i ? ctx.lineTo(X(i), Y(v)) : ctx.moveTo(X(i), Y(v))));
+      ctx.strokeStyle = bad ? "#ff4d5e" : "#4f7cff"; ctx.lineWidth = big ? 2 : 1.5; ctx.stroke();
+      if (big) {
+        ctx.fillStyle = "#ff4d5e";
+        d.forEach((v, i) => { if (f[i]) { ctx.beginPath(); ctx.arc(X(i), Y(v), 3, 0, 7); ctx.fill(); } });
+      }
+    }
+
+    // ---- detail dialog
+    function updateDetail() {
+      if (!openPath) return;
+      const d = series[openPath];
+      if (!d.length) return;
+      const cur = d[d.length - 1], n = nominal[openPath];
+      $("sCur").textContent = fmt(openPath, cur) + " " + METRICS[openPath][1];
+      $("sMin").textContent = fmt(openPath, Math.min(...d));
+      $("sMax").textContent = fmt(openPath, Math.max(...d));
+      $("sNom").textContent = n ? `${n[0]} to ${n[1]}` : "n/a";
+      const st = cards[openPath].state;
+      $("sState").textContent = st === "bad" ? "Anomaly" : st === "warn" ? "Out of range" : "Nominal";
+      $("dChart").setAttribute("aria-label", `${METRICS[openPath][0]} over the last two minutes, currently ${fmt(openPath, cur)} ${METRICS[openPath][1]}`);
+      plot($("dChart"), openPath, true);
+    }
+    function openDetail(path) {
+      openPath = path;
+      $("dTitle").textContent = METRICS[path][0];
+      $("detail").showModal();
+      animate("#detail", { opacity: [0, 1], scale: [0.96, 1], duration: 250, ease: "outQuad" });
+      requestAnimationFrame(updateDetail);
+    }
+    $("dClose").addEventListener("click", () => $("detail").close());
+    $("detail").addEventListener("click", (e) => { if (e.target === $("detail")) $("detail").close(); });
+    $("detail").addEventListener("close", () => { openPath = null; });
+
+    // ---- conversation log
+    const WHO = { you: "You", copilot: "Copilot", control: "Mission Control", system: "System" };
+    const argStr = (args) => Object.entries(args || {}).map(([k, v]) => `${k}=${v}`).join(", ");
+
+    function addMsg(role, text, pending) {
+      const el = document.createElement("div");
+      el.className = "msg " + role + (pending ? " pending" : "");
+      const who = document.createElement("div");
+      who.className = "who";
+      who.textContent = WHO[role] + " · " + new Date().toLocaleTimeString([], { hour12: false });
+      const body = document.createElement("div");
+      body.className = "text";
+      body.textContent = text;
+      el.append(who, body);
+      const log = $("log");
+      log.appendChild(el);
+      log.scrollTop = log.scrollHeight;
+      animate(el, { opacity: [0, 1], translateY: [10, 0], duration: 320, ease: "outQuad" });
+      return {
+        set(txt, calls, isErr, onRetry) {
+          el.classList.remove("pending");
+          el.classList.toggle("err", !!isErr);
+          body.textContent = txt;
+          if (calls?.length) {
+            const ol = document.createElement("ol");
+            ol.className = "steps";
+            calls.forEach((c, i) => {
+              const li = document.createElement("li");
+              const n = document.createElement("span"); n.className = "n"; n.textContent = i + 1;
+              const code = document.createElement("code"); code.textContent = c.name;
+              const a = document.createElement("span"); a.textContent = "(" + argStr(c.args) + ")";
+              li.append(n, code, a);
+              ol.appendChild(li);
+            });
+            el.appendChild(ol);
+            animate(ol.children, { opacity: [0, 1], translateX: [-8, 0], delay: window.anime ? anime.stagger(90) : 0, duration: 300 });
+          }
+          if (isErr && onRetry) {
+            const b = document.createElement("button");
+            b.className = "ghost retry"; b.type = "button"; b.textContent = "Retry";
+            b.onclick = () => { b.remove(); el.remove(); onRetry(); };
+            el.appendChild(b);
+          }
+          log.scrollTop = log.scrollHeight;
+        },
+      };
     }
 
     // ---- live telemetry
@@ -161,33 +344,52 @@
       $("met").textContent = t.mission_elapsed_time;
       $("crew").textContent = t.crew;
       const bad = new Map((t.anomalies || []).map((a) => [a.metric, a]));
-      for (const [path, [, , dec]] of Object.entries(METRICS)) {
-        const v = get(t, path);
-        const s = series[path];
-        s.push(v); if (s.length > MAXPTS) s.shift();
-        cards[path].v.textContent = v.toFixed(dec);
-        cards[path].el.classList.toggle("bad", bad.has(path));
-        spark(path, bad.has(path));
+      for (const path of Object.keys(METRICS)) {
+        const v = get(t, path), c = cards[path];
+        series[path].push(v); flags[path].push(bad.has(path));
+        if (series[path].length > MAXPTS) { series[path].shift(); flags[path].shift(); }
+        c.v.textContent = fmt(path, v);
+        const state = bad.has(path) ? "bad" : outOfRange(path, v) ? "warn" : "ok";
+        if (state !== c.state) {
+          c.state = state;
+          c.el.classList.toggle("bad", state === "bad");
+          c.el.classList.toggle("warn", state === "warn");
+          c.tag.textContent = state === "bad" ? "ANOMALY" : state === "warn" ? "OUT OF RANGE" : "";
+          if (state !== "ok") animate(c.el, { scale: [1, 1.04, 1], duration: 600, ease: "outQuad" });
+        }
+        plot(c.cv, path, false);
       }
+      updateDetail();
       const st = $("status");
       st.textContent = bad.size ? `${bad.size} ANOMAL${bad.size > 1 ? "IES" : "Y"}` : "NOMINAL";
-      st.classList.toggle("bad", bad.size > 0);
-      st.classList.remove("off");
+      st.className = "badge" + (bad.size ? " bad" : "");
       banner(bad.size ? "Anomaly: " + [...bad.values()].map((a) =>
         `${METRICS[a.metric][0]} ${a.direction} (z=${a.z_score})`).join(", ") : "");
-      $("alerts").innerHTML = (t.alerts || []).map((a) =>
-        `<div class="alert"><b>${a.level}</b>${a.system}: ${a.message}</div>`).join("")
-        || '<span style="color:var(--dim)">None</span>';
-      maybeAnnounce(bad);
+      const box = $("alerts");
+      box.replaceChildren();
+      for (const a of t.alerts || []) {
+        const row = document.createElement("div");
+        row.className = "alert";
+        const lv = document.createElement("b");
+        lv.className = a.level; lv.textContent = a.level;
+        row.append(lv, document.createTextNode(`${a.system}: ${a.message}`));
+        box.appendChild(row);
+      }
+      if (!box.children.length) box.innerHTML = '<span class="none">None</span>';
+      onAnomalies(bad);
     }
 
-    function maybeAnnounce(bad) {
+    function onAnomalies(bad) {
       const fresh = [...bad.keys()].filter((m) => !knownAnomalies.has(m));
       knownAnomalies = new Set(bad.keys());
-      if (!fresh.length || !$("announce").checked || Date.now() - lastAnnounce < 30000) return;
-      lastAnnounce = Date.now();
+      if (!fresh.length) return;
       const names = fresh.map((m) => METRICS[m][0]).join(" and ");
-      ask(`As Mission Control, in one sentence tell the crew what the new anomaly in ${names} is: the reading, how it deviates, and what to check. Do not raise an alarm.`, true, "control");
+      addMsg("system", "Anomaly detected: " + fresh.map((m) =>
+        `${METRICS[m][0]} ${bad.get(m).direction} (z=${bad.get(m).z_score})`).join(", "));
+      if (!$("announce").checked || Date.now() - lastAnnounce < 30000) return;
+      lastAnnounce = Date.now();
+      ask(`As Mission Control, in one sentence tell the crew what the new anomaly in ${names} is: the reading, how it deviates, and what to check. Do not raise an alarm.`,
+          { voice: "control", auto: true });
     }
 
     async function poll() {
@@ -206,16 +408,17 @@
       }
     }
 
-    async function loadHistory() {
+    async function loadInitial() {
+      try { nominal = await (await fetch("/api/nominal")).json(); } catch (_) {}
       await Promise.all(Object.keys(METRICS).map(async (path) => {
         try {
-          const pts = await (await fetch("/api/history/" + path)).json();
-          series[path] = pts.slice(-MAXPTS).map((p) => p.v);
+          const pts = (await (await fetch("/api/history/" + path)).json()).slice(-MAXPTS);
+          series[path] = pts.map((p) => p.v);
+          flags[path] = pts.map(() => false);
         } catch (_) {}
       }));
     }
-
-    loadHistory().then(() => { poll(); setInterval(poll, 1000); });
+    loadInitial().then(() => { poll(); setInterval(poll, 1000); });
 
     // ---- waveform (reads the actual TTS audio via Web Audio)
     let audioCtx = null, analyser = null, speaking = false;
@@ -244,10 +447,7 @@
       const t = performance.now() / 120;
       for (let i = 0; i < n; i++) {
         let amp = 0.04;
-        if (speaking) {
-          amp = data ? data[Math.floor((i / n) * data.length * 0.7)] / 255
-                     : 0.3 + 0.3 * Math.sin(t + i * 0.6);
-        }
+        if (speaking) amp = data ? data[Math.floor((i / n) * data.length * 0.7)] / 255 : 0.3 + 0.3 * Math.sin(t + i * 0.6);
         const bh = Math.max(2, amp * h);
         ctx.fillStyle = speaking ? "#4f7cff" : "#1f2a48";
         ctx.fillRect(i * (bw + gap), (h - bh) / 2, bw, bh);
@@ -257,25 +457,26 @@
     drawWave();
 
     function playAudio(b64) {
-      const audio = new Audio("data:audio/mpeg;base64," + b64);
-      try {
-        if (audioCtx && analyser) audioCtx.createMediaElementSource(audio).connect(analyser);
-      } catch (_) {}
-      audio.onplay = () => { speaking = true; };
-      audio.onended = audio.onerror = () => { speaking = false; };
-      audio.play().catch(() => { speaking = false; });
+      speaking = true;
+      return new Promise((resolve) => {
+        const done = () => { speaking = false; resolve(); };
+        const audio = new Audio("data:audio/mpeg;base64," + b64);
+        try { if (audioCtx && analyser) audioCtx.createMediaElementSource(audio).connect(analyser); } catch (_) {}
+        audio.onended = audio.onerror = done;
+        audio.play().catch(done);
+      });
     }
 
     // ---- ask
-    function setAnswer(text, isErr) {
-      $("answer").textContent = text;
-      $("answer").classList.toggle("err", !!isErr);
-    }
+    let inflight = 0;
 
-    async function ask(question, silentIfBusy, voice = "copilot") {
-      if (silentIfBusy && speaking) return;
-      setAnswer("Thinking...");
-      $("tools").textContent = "";
+    async function ask(question, { voice = "copilot", auto = false, echo = true } = {}) {
+      if (auto && (speaking || inflight)) return;
+      if (!auto && echo) addMsg("you", question);
+      const msg = addMsg(voice === "control" ? "control" : "copilot", "Thinking...", true);
+      inflight++;
+      $("ask").disabled = true;
+      const retry = auto ? null : () => ask(question, { voice, echo: false });
       try {
         const res = await fetch("/api/ask", {
           method: "POST",
@@ -283,36 +484,82 @@
           body: JSON.stringify({ question, voice }),
         });
         const data = await res.json();
-        if (data.error) { setAnswer(data.error, true); return; }
-        setAnswer(data.answer);
-        $("tools").textContent = data.tools?.length ? "Tools used: " + data.tools.join(" → ") : "";
+        if (data.error) { msg.set(data.error, [], true, retry); return; }
+        msg.set(data.answer + (data.audio ? "" : "\n(audio unavailable)"), data.tools);
         if (data.audio) playAudio(data.audio);
-        else setAnswer(data.answer + "\n(audio unavailable)");
       } catch (e) {
-        setAnswer("Request failed: " + e, true);
+        msg.set("Request failed: " + e, [], true, retry);
+      } finally {
+        inflight--;
+        $("ask").disabled = inflight > 0;
       }
     }
 
-    $("form").addEventListener("submit", (e) => { e.preventDefault(); ensureAudio(); ask($("q").value); });
-
-    // ---- fault injection (demo)
-    $("fault").addEventListener("click", async () => {
+    $("form").addEventListener("submit", (e) => {
+      e.preventDefault();
       ensureAudio();
+      const q = $("q").value.trim();
+      if (!q) return;
+      $("q").value = "";
+      ask(q);
+    });
+
+    // ---- fault injection + scripted scenario
+    async function injectFault(metric) {
       try {
         await fetch("/api/sim/fault", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ metric: $("faultMetric").value }),
+          body: JSON.stringify({ metric }),
         });
-      } catch (e) { setAnswer("Fault injection failed: " + e, true); }
-    });
+      } catch (e) { addMsg("system", "Fault injection failed: " + e); }
+    }
+    $("fault").addEventListener("click", () => { ensureAudio(); injectFault($("faultMetric").value); });
+
+    let demoAbort = false, demoRunning = false;
+    async function runDemo() {
+      if (demoRunning) return;
+      demoRunning = true; demoAbort = false;
+      ensureAudio();
+      $("demo").disabled = true; $("demoStop").hidden = false;
+      $("announce").checked = true;
+      const step = (n, text) => { $("demoStatus").textContent = `Step ${n}/4: ${text}`; };
+      const idle = async () => { while ((speaking || inflight) && !demoAbort) await sleep(200); };
+      try {
+        step(1, "waiting for the anomaly detector to warm up");
+        while (series["cabin.co2_ppm"].length < 35 && !demoAbort) await sleep(500);
+        if (demoAbort) return;
+        addMsg("system", "Scenario: CO2 scrubber degradation.");
+        step(2, "injecting a CO2 fault");
+        lastAnnounce = 0;
+        await injectFault("cabin.co2_ppm");
+        for (let i = 0; i < 20 && !knownAnomalies.has("cabin.co2_ppm") && !demoAbort; i++) await sleep(500);
+        await sleep(800); await idle();
+        if (demoAbort) return;
+        step(3, "asking the copilot what to do");
+        await sleep(1200);
+        await ask("What should we do about the CO2?"); await idle();
+        if (demoAbort) return;
+        step(4, "running diagnostics and raising an alarm");
+        await sleep(1200);
+        await ask("Run diagnostics and raise an alarm if anything is wrong."); await idle();
+        if (!demoAbort) { addMsg("system", "Scenario complete."); $("demoStatus").textContent = "Scenario complete."; }
+      } finally {
+        if (demoAbort) $("demoStatus").textContent = "Scenario stopped.";
+        demoRunning = false; $("demo").disabled = false; $("demoStop").hidden = true;
+      }
+    }
+    $("demo").addEventListener("click", runDemo);
+    $("demoStop").addEventListener("click", () => { demoAbort = true; });
 
     // ---- voice input (record, then transcribe server-side)
     let recorder = null;
     const setMic = (label, on) => {
       $("mic").textContent = label;
-      $("mic").style.background = on ? "#d9534f" : "";
+      $("mic").classList.toggle("rec", on);
+      $("mic").setAttribute("aria-pressed", on);
     };
+    const micStatus = (text) => { $("micStatus").textContent = text; };
 
     async function startRecording() {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -323,29 +570,38 @@
         stream.getTracks().forEach((t) => t.stop());
         recorder = null;
         setMic("Mic", false);
-        setAnswer("Transcribing...");
+        micStatus("Transcribing...");
         try {
           const res = await fetch("/api/transcribe", { method: "POST", body: new Blob(chunks) });
           const data = await res.json();
-          if (data.error || !data.text) { setAnswer(data.error || "Didn't catch that. Try again.", true); return; }
-          $("q").value = data.text;
+          if (data.error || !data.text) { micStatus(data.error || "Didn't catch that. Try again."); return; }
+          micStatus("Press M to talk · Enter to send");
           ask(data.text);
         } catch (e) {
-          setAnswer("Transcription request failed: " + e, true);
+          micStatus("Transcription request failed: " + e);
         }
       };
       recorder.start();
       setMic("Stop", true);
+      micStatus("Listening... press M or Stop when done");
     }
 
-    $("mic").addEventListener("click", async () => {
+    async function toggleMic() {
       ensureAudio();
       if (recorder) { recorder.stop(); return; }
       try { await startRecording(); }
       catch (e) {
         setMic("Mic", false);
-        setAnswer("Microphone unavailable (" + e.name + "). You can type instead.", true);
+        micStatus("Microphone unavailable (" + e.name + "). You can type instead.");
       }
+    }
+    $("mic").addEventListener("click", toggleMic);
+
+    document.addEventListener("keydown", (e) => {
+      if (e.ctrlKey || e.metaKey || e.altKey || e.key.toLowerCase() !== "m") return;
+      if (/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName) || $("detail").open) return;
+      e.preventDefault();
+      toggleMic();
     });
   </script>
 </body>

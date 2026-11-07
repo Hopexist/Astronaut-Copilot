@@ -9,6 +9,7 @@ from pydantic import BaseModel
 
 from app import telemetry as sim
 from app.gemini import ask_gemini, load_telemetry
+from app.tools import NOMINAL
 from app.voice import speak, transcribe
 
 
@@ -55,6 +56,11 @@ def history(metric: str) -> list[dict]:
         return sim.history(metric)
     except KeyError:
         raise HTTPException(404, f"Unknown metric: {metric}")
+
+
+@app.get("/api/nominal")
+def nominal() -> dict:
+    return NOMINAL
 
 
 @app.post("/api/sim/fault")
