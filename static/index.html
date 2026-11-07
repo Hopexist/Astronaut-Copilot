@@ -17,11 +17,11 @@
     <a class="brand" href="#hero">ASTRONAUT COPILOT</a>
     <div class="links">
       <a href="#hero" data-s="hero" class="active">Mission</a>
-      <a href="#news" data-s="news">News</a>
       <a href="#flight" data-s="flight">How it works</a>
       <a href="#spacecraft" data-s="spacecraft">Spacecraft</a>
       <a href="#telemetry" data-s="telemetry">Telemetry</a>
       <a href="#console" data-s="console">Assistant</a>
+      <a href="#news" data-s="news">News</a>
     </div>
     <span class="spacer"></span>
     <span class="meta">MET <span id="met">--:--:--</span></span>
@@ -44,21 +44,6 @@
         <button id="ctaTalk" type="button" class="ghost">Ask the assistant</button>
       </div>
       <p class="latest" id="latest" hidden><span class="kicker">Latest from Artemis</span><br><a id="latestLink" href="https://www.nasa.gov/missions/artemis/" target="_blank" rel="noopener noreferrer"></a></p>
-    </section>
-
-    <section id="news" aria-label="Mission news">
-      <div class="sec-head reveal">
-        <div><span class="kicker">Artemis</span><h2>Mission news</h2></div>
-        <p>Recent stories from NASA's Artemis coverage.</p>
-        <a class="more-link" href="https://www.nasa.gov/missions/artemis/" target="_blank" rel="noopener noreferrer">All Artemis news on nasa.gov<span class="sr"> (opens in a new tab)</span></a>
-      </div>
-      <div class="news-grid" id="newsGrid">
-        <div class="story feature skeleton" aria-hidden="true"></div>
-        <div class="story skeleton" aria-hidden="true"></div>
-        <div class="story skeleton" aria-hidden="true"></div>
-        <div class="story skeleton" aria-hidden="true"></div>
-      </div>
-      <p class="news-meta" id="newsMeta"></p>
     </section>
 
     <section id="flight" aria-label="How it works: flight path">
@@ -109,11 +94,13 @@
     </section>
 
     <section id="telemetry" aria-label="Telemetry. Select a card for details.">
-      <div class="sec-head reveal"><div><span class="kicker">Spacecraft</span><h2>Telemetry</h2></div><p>Nine readings, updated every second. Select one for its chart and limits.</p></div>
-      <div class="group reveal"><h3>Cabin</h3><div class="cards" id="grid-cabin"></div></div>
-      <div class="group reveal"><h3>Power</h3><div class="cards" id="grid-power"></div></div>
-      <div class="group reveal"><h3>Propulsion</h3><div class="cards" id="grid-propulsion"></div></div>
-      <div class="group reveal"><h3>Thermal</h3><div class="cards" id="grid-thermal"></div></div>
+      <div class="sec-head reveal"><div><span class="kicker">Live data</span><h2>Telemetry</h2></div><p>Nine readings, updated every second. Select one for its chart and limits.</p></div>
+      <div class="bento">
+      <div class="group g-cabin reveal"><h3>Cabin</h3><div class="cards" id="grid-cabin"></div></div>
+      <div class="group g-power reveal"><h3>Power</h3><div class="cards" id="grid-power"></div></div>
+      <div class="group g-prop reveal"><h3>Propulsion</h3><div class="cards" id="grid-propulsion"></div></div>
+      <div class="group g-therm reveal"><h3>Thermal</h3><div class="cards" id="grid-thermal"></div></div>
+      </div>
     </section>
 
     <section id="console" aria-label="Crew assistant">
@@ -153,6 +140,21 @@
           </section>
         </div>
       </div>
+    </section>
+
+    <section id="news" aria-label="Mission news">
+      <div class="sec-head reveal">
+        <div><span class="kicker">Artemis</span><h2>Mission news</h2></div>
+        <p>Recent stories from NASA's Artemis coverage.</p>
+        <a class="more-link" href="https://www.nasa.gov/missions/artemis/" target="_blank" rel="noopener noreferrer">All Artemis news on nasa.gov<span class="sr"> (opens in a new tab)</span></a>
+      </div>
+      <div class="news-grid" id="newsGrid">
+        <div class="story feature skeleton" aria-hidden="true"></div>
+        <div class="story skeleton" aria-hidden="true"></div>
+        <div class="story skeleton" aria-hidden="true"></div>
+        <div class="story skeleton" aria-hidden="true"></div>
+      </div>
+      <p class="news-meta" id="newsMeta"></p>
     </section>
   </main>
 

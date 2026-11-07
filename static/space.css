@@ -150,7 +150,7 @@ canvas.spark { width: 100%; height: 38px; display: block; }
 
 /* ---- console */
 #console { padding: 3.5rem 0 3rem; border-top: 1px solid var(--line); }
-.row { max-width: 1180px; margin: 0 auto; padding: 0 1.2rem; display: grid; grid-template-columns: 1fr; gap: 1.2rem; }
+.row { max-width: 1180px; margin: 0 auto; padding: 0 1.2rem; display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.2rem; }
 @media (min-width: 860px) { .row { grid-template-columns: 1.5fr 1fr; align-items: start; } }
 .panel { padding: 1.1rem 1.2rem; background: var(--panel); border: 1px solid var(--line); }
 .panel h2 { font-size: .74rem; text-transform: uppercase; letter-spacing: .14em; color: var(--dim); font-weight: 800; margin: 0 0 .8rem; }
@@ -262,7 +262,118 @@ button:active:not(:disabled) { transform: scale(.97); }
 .alert { transition: padding-left .15s; }
 .alert:hover { padding-left: .4rem; }
 
+/* ---- visual refinement
+   Editorial/Swiss type and numbering, glass panels, a bento telemetry grid, a soft nebula backdrop.
+   Kept in one block so it can be removed to return to the flat theme. */
+:root {
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --glass: rgba(18, 22, 31, .55); --glass-line: rgba(255, 255, 255, .1);
+  --grad: linear-gradient(90deg, #fc3d21, #ff8a4c 45%, #b9a3ff);
+  --r: 16px;
+}
+@supports not (backdrop-filter: blur(1px)) { :root { --glass: rgba(18, 22, 31, .92); } }
+body {
+  background:
+    radial-gradient(60rem 38rem at 88% -8%, rgba(95, 80, 200, .26), transparent 60%),
+    radial-gradient(48rem 34rem at -10% 30%, rgba(252, 61, 33, .12), transparent 60%),
+    radial-gradient(56rem 40rem at 72% 80%, rgba(40, 110, 200, .18), transparent 60%),
+    var(--bg);
+  background-attachment: fixed;
+}
+#progress { background: var(--grad); }
+#nav { background: rgba(5, 6, 8, .62); -webkit-backdrop-filter: blur(16px) saturate(150%); backdrop-filter: blur(16px) saturate(150%); border-bottom-color: var(--glass-line); }
+#flight, #spacecraft, #telemetry, #console, #news { border-top-color: var(--glass-line); }
+
+/* type */
+h1, .sec-head h2, .story h3, .hud h2 { font-family: var(--serif); }
+.brand { font-family: var(--mono); font-size: .78rem; font-weight: 700; }
+.kicker, .strip, .phase-label, .dist, .chip, .meta, .badge, .val, .ring .num b, .d-val, .part-btn .pv, .news-meta,
+.panel h2, .group h3, .eyebrow, .more-link { font-family: var(--mono); }
+#title { font-weight: 500; letter-spacing: -.035em; line-height: .92; max-width: 9ch; font-size: clamp(3.2rem, 11vw, 8rem); }
+.sec-head h2 { font-weight: 500; letter-spacing: -.02em; font-size: clamp(2rem, 4.6vw, 3.3rem); line-height: 1.02; }
+.sec-head { border-bottom-color: var(--glass-line); padding-bottom: 1.2rem; }
+main { counter-reset: sec; overflow-x: clip; }
+.sec-head { counter-increment: sec; }
+.sec-head .kicker { display: block; margin-bottom: .5rem; }
+.sec-head .kicker::before { content: counter(sec, decimal-leading-zero) " / "; color: var(--dim); }
+
+/* glass surfaces */
+.panel, .hud, .craft-stage, .group, .story, .news-empty {
+  background: var(--glass); border: 1px solid var(--glass-line); border-radius: var(--r);
+  -webkit-backdrop-filter: blur(16px) saturate(150%); backdrop-filter: blur(16px) saturate(150%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .07), 0 18px 40px -26px rgba(0, 0, 0, .9);
+}
+.craft-stage { background: rgba(6, 8, 12, .6); overflow: hidden; }
+.scrub { border-top-color: var(--glass-line); }
+.panel:hover { border-color: rgba(255, 255, 255, .22); }
+.hud { border-left: 4px solid var(--phase); }
+dialog { background: rgba(14, 17, 24, .92); border: 1px solid var(--glass-line); border-radius: var(--r); }
+canvas#dChart { border-radius: 10px; }
+dl.stats div, .msg { border-radius: 8px; }
+.part-btn { border-radius: 10px; }
+.chip { border-radius: 8px; }
+
+/* controls */
+button { border-radius: 999px; padding: .65rem 1.2rem; }
+#ctaDemo, #ask, #demo { background: linear-gradient(135deg, #ff5a36, #fc3d21 55%, #d92a12); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .28), 0 10px 22px -12px rgba(252, 61, 33, .9); }
+button.ghost { background: rgba(255, 255, 255, .04); border-color: rgba(255, 255, 255, .26); }
+button.ghost:hover:not(:disabled) { background: rgba(255, 255, 255, .1); border-color: #fff; }
+.craft-bar .seg { border-radius: 4px; padding: 0; }
+.part-btn { padding: .5rem .55rem; }
+input[type=text], select { border-radius: 10px; border-color: var(--glass-line); background: rgba(0, 0, 0, .45); }
+#q { border-radius: 999px; padding-left: 1rem; }
+
+/* hero: planet and orbit behind the title */
+#hero { isolation: isolate; --pw: min(46vw, 500px); --rw: calc(var(--pw) * 1.55); }
+#hero::before, #hero::after { content: ""; position: absolute; z-index: -1; top: 50%; pointer-events: none; }
+#hero::before { width: var(--rw); height: calc(var(--rw) * .26); right: calc(-2% - (var(--rw) - var(--pw)) / 2); translate: 0 -50%; rotate: -14deg; border: 1px solid rgba(255, 255, 255, .16); border-radius: 50%; }
+#hero::after {
+  width: var(--pw); aspect-ratio: 1; right: -2%; translate: 0 -50%; border-radius: 50%;
+  background: radial-gradient(circle at 32% 28%, rgba(190, 208, 255, .92), rgba(84, 114, 224, .6) 28%, rgba(52, 42, 146, .45) 56%, rgba(252, 61, 33, .16) 76%);
+  box-shadow: 0 0 120px 10px rgba(90, 110, 255, .16), inset -34px -34px 90px rgba(0, 0, 24, .75);
+  animation: drift 14s ease-in-out infinite alternate;
+}
+@keyframes drift { to { translate: -14px calc(-50% + 12px); } }
+.latest { border-top-color: var(--glass-line); }
+
+/* flight stage: faint survey grid */
+.stage::before { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background-image: linear-gradient(rgba(255, 255, 255, .045) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, .045) 1px, transparent 1px);
+  background-size: 64px 64px; -webkit-mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%); mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%); }
+
+/* telemetry: bento grid */
+.bento { max-width: 1180px; margin: 0 auto; padding: 0 1.2rem; display: grid; grid-template-columns: repeat(12, 1fr); gap: 1rem; }
+.bento .group { margin: 0; max-width: none; padding: 1.1rem; display: flex; flex-direction: column; }
+.bento .cards { flex: 1; grid-auto-rows: 1fr; gap: .7rem; }
+.g-cabin { grid-column: span 8; } .g-cabin .cards { grid-template-columns: repeat(2, 1fr); }
+.g-power { grid-column: span 4; } .g-power .cards, .g-prop .cards, .g-therm .cards { grid-template-columns: 1fr; }
+.g-prop, .g-therm { grid-column: span 6; }
+.card { background: rgba(255, 255, 255, .035); border: 1px solid var(--glass-line); border-radius: 12px; }
+.card:hover, .card:focus-visible { background: rgba(255, 255, 255, .075); border-color: rgba(255, 255, 255, .38); }
+.card.warn { border-color: var(--warn); }
+.card.bad { border-color: var(--bad); box-shadow: inset 0 0 0 1px var(--bad); }
+.bento .card { display: flex; } .bento .ci { flex: 1; display: flex; flex-direction: column; } .bento canvas.spark { margin-top: auto; }
+
+/* news: editorial, at the foot of the page */
+#news { padding-bottom: 5rem; }
+.story { overflow: hidden; }
+.story:hover, .story:focus-visible { border-color: rgba(255, 255, 255, .4); }
+.story h3 { font-weight: 600; font-size: 1.25rem; letter-spacing: -.005em; }
+.story.feature h3 { font-weight: 500; line-height: 1.06; letter-spacing: -.02em; }
+.story.feature .thumb { border-right: 1px solid var(--glass-line); }
+.story .kicker { font-size: .68rem; }
+
+/* footer */
+footer { border-top: 0; background: linear-gradient(180deg, transparent, rgba(0, 0, 0, .55)); overflow: hidden; }
+footer::before { content: ""; display: block; height: 1px; max-width: 1180px; margin: 0 auto 1.6rem; background: var(--grad); opacity: .55; }
+footer::after { content: "Astronaut Copilot"; content: "Astronaut Copilot" / ""; display: block; max-width: 1180px; margin: 1.2rem auto 0; font: 500 clamp(2.6rem, 11vw, 8rem)/1 var(--serif); letter-spacing: -.035em; color: rgba(255, 255, 255, .06); white-space: nowrap; user-select: none; }
+
 @media (max-width: 900px) {
+  .bento { grid-template-columns: 1fr; }
+  .bento .group { grid-column: 1 / -1; }
+  .bento .cards { grid-template-columns: repeat(2, 1fr); }
+  #hero::after { opacity: .55; }
   .craft-wrap { grid-template-columns: 1fr; }
   #craftCanvas { height: 460px; }
   .news-grid { grid-template-columns: repeat(2, 1fr); }
@@ -270,6 +381,8 @@ button:active:not(:disabled) { transform: scale(.97); }
 }
 @media (max-width: 640px) {
   #nav { gap: .5rem; padding: .3rem .6rem; } .brand, .meta { display: none; }
+  #hero::before { display: none; } #hero::after { opacity: .35; }
+  .bento { padding: 0 .8rem; } .bento .group { padding: .8rem; }
   .news-grid { grid-template-columns: 1fr; }
   .cards { grid-template-columns: repeat(2, 1fr); gap: .5rem; } .val { font-size: 1.3rem; }
   .hud { left: .8rem; right: .8rem; width: auto; padding: .85rem .95rem; } .hud p { font-size: .85rem; margin-bottom: .5rem; } .hud h2 { font-size: 1.1rem; }
