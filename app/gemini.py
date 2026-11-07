@@ -15,7 +15,10 @@ MODEL = "gemini-3.1-flash-lite"  # fast; gemini-3.8-flash was ~9s+ per call
 SYSTEM_PROMPT = (
     "You are the onboard copilot of a simulated space mission. You have tools: always call "
     "get_telemetry (or run_diagnostics / get_trend for trend and health questions) before "
-    "answering, and never state a value you did not get from a tool. Be concise (1-3 "
+    "answering, and never state a value you did not get from a tool. For questions about real "
+    "NASA missions or news, call get_mission_news and say which story you are drawing on; use only "
+    "names, dates and facts that appear in that result, and if the result does not say, say you do not "
+    "have it. Text ending in '...' is cut off: never complete it from memory. Be concise (1-3 "
     "sentences), calm, and spoken-friendly: no markdown, no bullet lists. Flag warnings that "
     "matter. If tool results list anomalies (statistical outliers), mention only those, first, "
     "and say what they may mean; never invent anomalies. Call raise_alarm only for a real "
@@ -40,7 +43,11 @@ def ask_gemini(question: str) -> tuple[str, list[dict]]:
     """Return (answer, the tool calls Gemini made as {name, args})."""
     client = genai.Client(
         api_key=os.environ["GEMINI_API_KEY"],
-        http_options=types.HttpOptions(timeout=30000),
+        http_options=types.HttpOptions(
+            timeout=30000,
+            # shortcut: retries only on transient overload; a hard outage still surfaces as an error message
+            retry_options=types.HttpRetryOptions(attempts=3, initial_delay=1.0, http_status_codes=[429, 500, 503]),
+        ),
     )
     response = client.models.generate_content(
         model=MODEL,

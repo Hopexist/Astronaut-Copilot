@@ -26,14 +26,11 @@
       const y = scrollY;
       vel += ((y - lastY) - vel) * 0.15; lastY = y;
       ctx.clearRect(0, 0, W, H);
-      const streak = reduce ? 0 : Math.min(Math.abs(vel) * 0.9, 60);
       for (const s of stars) {
         const py = (((s.y * H - y * dpr * s.z * 0.25) % H) + H) % H, px = s.x * W;
-        ctx.globalAlpha = (reduce ? 0.7 : 0.45 + 0.45 * Math.sin((t / 900) * s.z + s.p)) * (0.5 + s.z / 2);
-        ctx.fillStyle = s.z > 0.8 ? "#cfe0ff" : "#ffffff";
-        const r = s.z * 1.4 * dpr;
-        if (streak > 2) ctx.fillRect(px, py, r, r + streak * s.z * dpr);
-        else { ctx.beginPath(); ctx.arc(px, py, r, 0, 6.283); ctx.fill(); }
+        ctx.globalAlpha = (reduce ? 0.6 : 0.4 + 0.35 * Math.sin((t / 1400) * s.z + s.p)) * (0.4 + s.z / 2);
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath(); ctx.arc(px, py, s.z * 1.2 * dpr, 0, 6.283); ctx.fill();
       }
       if (!reduce) requestAnimationFrame(draw);
     }
@@ -42,19 +39,9 @@
     if (!reduce) requestAnimationFrame(draw);
   });
 
-  /* ---------- 2. hero: letter-by-letter title (Anime.js) + ring gauges ---------- */
+  /* ---------- 2. hero: plain fade-in (Anime.js) + ring gauges ---------- */
   guard(() => {
-    const title = $("title"), text = title.dataset.text || title.textContent.trim();
-    title.setAttribute("aria-label", text);
-    title.textContent = "";
-    [...text].forEach((ch, i, all) => {
-      const s = document.createElement("span");
-      s.className = "ch"; s.setAttribute("aria-hidden", "true");
-      s.textContent = ch === " " ? " " : ch;
-      s.style.color = `hsl(${215 + (60 * i) / (all.length - 1)} 92% 84%)`;
-      title.appendChild(s);
-    });
-    if (A && !reduce) A.animate("#title .ch", { translateY: [60, 0], rotate: [10, 0], opacity: [0, 1], delay: A.stagger(45), duration: 900, ease: "outExpo" });
+    if (A && !reduce) A.animate(["#hero .eyebrow", "#title", "#hero .tagline", "#hero .rings", "#hero .ctas"], { opacity: [0, 1], translateY: [14, 0], delay: A.stagger(90), duration: 600, ease: "outQuad" });
   });
 
   const RINGS = [
@@ -87,7 +74,7 @@
     const io = new IntersectionObserver((entries) => {
       for (const en of entries) if (en.isIntersecting) links.forEach((a) => a.classList.toggle("active", a.dataset.s === en.target.id));
     }, { rootMargin: "-45% 0px -50% 0px" });
-    ["hero", "flight", "telemetry", "console"].forEach((id) => $(id) && io.observe($(id)));
+    ["hero", "news", "flight", "telemetry", "console"].forEach((id) => $(id) && io.observe($(id)));
   });
 
   /* ---------- 4. scroll reveals (Motion inView) ---------- */
@@ -96,28 +83,12 @@
     document.documentElement.classList.add("js-motion");
     M.inView(".reveal", (el) => {
       const cards = el.querySelectorAll(".card");
-      M.animate(el, { opacity: [0, 1], y: [34, 0] }, { duration: 0.7, ease: "easeOut" });
-      if (cards.length) M.animate(cards, { opacity: [0, 1], y: [26, 0], scale: [0.96, 1] }, { duration: 0.6, delay: M.stagger(0.07, { startDelay: 0.15 }), ease: "easeOut" });
+      M.animate(el, { opacity: [0, 1], y: [16, 0] }, { duration: 0.5, ease: "easeOut" });
+      if (cards.length) M.animate(cards, { opacity: [0, 1], y: [12, 0] }, { duration: 0.4, delay: M.stagger(0.05, { startDelay: 0.1 }), ease: "easeOut" });
     }, { amount: 0.15 });
     // Cards sit inside a .reveal group; keep them visible until the group animates them.
     document.querySelectorAll(".group .card").forEach((c) => { c.style.opacity = 0; });
     setTimeout(() => document.querySelectorAll(".reveal, .group .card").forEach((el) => { if (getComputedStyle(el).opacity === "0" && el.getBoundingClientRect().top < innerHeight) el.style.opacity = 1; }), 4000);
-  });
-
-  /* ---------- 5. card spotlight + tilt (pointer follows) ---------- */
-  guard(() => {
-    if (reduce) return;
-    const root = $("telemetry");
-    root.addEventListener("pointermove", (e) => {
-      const card = e.target.closest(".card"); if (!card) return;
-      const r = card.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
-      card.style.setProperty("--mx", x * 100 + "%"); card.style.setProperty("--my", y * 100 + "%");
-      card.style.setProperty("--rx", (0.5 - y) * 9 + "deg"); card.style.setProperty("--ry", (x - 0.5) * 11 + "deg");
-    });
-    root.addEventListener("pointerout", (e) => {
-      const card = e.target.closest(".card"); if (!card || card.contains(e.relatedTarget)) return;
-      card.style.setProperty("--rx", "0deg"); card.style.setProperty("--ry", "0deg");
-    });
   });
 
   /* ---------- 6. flight path: sticky stage that changes with scroll ---------- */
@@ -126,17 +97,17 @@
   const live = () => window.cockpit?.latest;
   const num = (path, d = 0) => { const v = path.split(".").reduce((o, k) => o?.[k], live()); return typeof v === "number" ? v.toFixed(d) : "--"; };
   const PHASES = [
-    { color: "#3ddc97", title: "Nominal operations",
-      text: "Nine telemetry streams are tracked at 1 Hz against nominal limits, so the crew sees one calm picture of the ship.",
-      chip: () => `Battery ${num("power.battery_percent", 1)}% · O2 ${num("cabin.o2_percent", 1)}%` },
-    { color: "#ff4d5e", title: "Anomaly detected",
-      text: "A robust z-score (median and MAD) flags sudden deviations in about a second, even after earlier faults.",
-      chip: () => { const a = live()?.anomalies?.[0]; return a ? `${a.metric.split(".")[1]} ${a.direction} · z=${a.z_score}` : "No active anomaly. Inject a fault in the console."; } },
-    { color: "#5b86ff", title: "Copilot responds",
-      text: "Gemini calls tools on live data, then Mission Control and the copilot speak the result in two different voices.",
-      chip: () => { const c = [...document.querySelectorAll(".msg .steps code")].slice(-3).map((e) => e.textContent); return c.length ? "Last tools: " + c.join(" → ") : "Ask the copilot to see its tool calls."; } },
-    { color: "#ffb020", title: "Alarm and recovery",
-      text: "raise_alarm puts the problem on the dashboard; the injected fault then fades and the detector re-baselines.",
+    { color: "#3ddc97", title: "Normal operations",
+      text: "Nine readings are checked every second against their limits.",
+      chip: () => `Battery ${num("power.battery_percent", 1)}% · Cabin O2 ${num("cabin.o2_percent", 1)}%` },
+    { color: "#ff5a4a", title: "A problem is detected",
+      text: "A reading that jumps away from its recent pattern is flagged within about a second.",
+      chip: () => { const a = live()?.anomalies?.[0]; return a ? `${a.metric.split(".")[1]} is ${a.direction} · z = ${a.z_score}` : "No active problem. Use Inject fault in the Assistant section."; } },
+    { color: "#4f8de8", title: "The assistant answers",
+      text: "The assistant reads the live data before it replies. Mission Control announces new problems in a separate voice.",
+      chip: () => { const c = [...document.querySelectorAll(".msg .steps code")].slice(-3).map((e) => e.textContent); return c.length ? "Last data checks: " + c.join(", ") : "Ask the assistant a question to see its data checks."; } },
+    { color: "#ffb020", title: "Alert and recovery",
+      text: "The assistant can post an alert to the dashboard. The simulated fault then fades and monitoring resets.",
       chip: () => `${live()?.alerts?.length ?? 0} active alert(s)` },
   ];
   let phase = -1;

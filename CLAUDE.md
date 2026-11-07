@@ -19,7 +19,9 @@ questions with Gemini, speaks answers with ElevenLabs.
 ## Structure
 - app/main.py (routes), app/gemini.py, app/voice.py, app/telemetry.py
   (live simulator + z-score anomaly detection), data/telemetry.json (baseline)
-- app/tools.py: Gemini function-calling tools (get_telemetry, get_trend, run_diagnostics, raise_alarm)
+- app/tools.py: Gemini function-calling tools (get_telemetry, get_trend, run_diagnostics, raise_alarm, get_mission_news)
+- app/news.py: NASA Artemis RSS feed -> /api/news (15 min cache; falls back to data/news_fallback.json when offline)
+- Look and wording: plain mission-control tone, nasa.gov-style flat design, no NASA logo/branding; keep the "unofficial, not affiliated" notices
 - Demo: `POST /api/sim/fault {"metric": "cabin.co2_ppm"}` injects an anomaly
 - static/ (frontend): index.html = markup + app logic; space.css = theme; space.js = visual layer (starfield, hero, scroll-driven flight path, reveals)
 - static/vendor/: Anime.js 4.5.0 and Motion 14.10.1 (both MIT), self-hosted so the demo needs no CDN

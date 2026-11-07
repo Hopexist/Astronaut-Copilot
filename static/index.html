@@ -8,16 +8,19 @@
   <link rel="stylesheet" href="/static/space.css">
 </head>
 <body>
+  <a class="skip" href="#hero">Skip to content</a>
   <canvas id="stars" aria-hidden="true"></canvas>
   <div id="progress" aria-hidden="true"></div>
+  <div id="strip">Unofficial student project · Not affiliated with NASA</div>
 
   <nav id="nav" aria-label="Sections">
     <a class="brand" href="#hero">ASTRONAUT COPILOT</a>
     <div class="links">
       <a href="#hero" data-s="hero" class="active">Mission</a>
-      <a href="#flight" data-s="flight">Flight path</a>
+      <a href="#news" data-s="news">News</a>
+      <a href="#flight" data-s="flight">How it works</a>
       <a href="#telemetry" data-s="telemetry">Telemetry</a>
-      <a href="#console" data-s="console">Console</a>
+      <a href="#console" data-s="console">Assistant</a>
     </div>
     <span class="spacer"></span>
     <span class="meta">MET <span id="met">--:--:--</span></span>
@@ -27,19 +30,34 @@
 
   <main>
     <section id="hero" aria-label="Mission overview">
-      <p class="eyebrow"><span id="mission">--</span> · Crew <span id="crew">-</span></p>
-      <h1 id="title" data-text="Astronaut Copilot">Astronaut Copilot</h1>
-      <p class="tagline">A voice copilot that watches your spacecraft's telemetry, catches anomalies, and talks you through them.</p>
+      <p class="eyebrow"><span id="mission">--</span> · Crew <span id="crew">-</span> · Simulated mission</p>
+      <h1 id="title">Astronaut Copilot</h1>
+      <p class="tagline">Live spacecraft telemetry and a voice assistant for the crew. All readings on this page are simulated.</p>
       <div class="rings" role="group" aria-label="Key vitals">
         <figure class="ring" id="ring-o2" data-state="ok"><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="trk" cx="60" cy="60" r="50"/><circle class="val" cx="60" cy="60" r="50" transform="rotate(-90 60 60)" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/></svg><div class="num"><b>--</b><small>%</small></div><figcaption>Cabin O2</figcaption></figure>
         <figure class="ring" id="ring-battery" data-state="ok"><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="trk" cx="60" cy="60" r="50"/><circle class="val" cx="60" cy="60" r="50" transform="rotate(-90 60 60)" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/></svg><div class="num"><b>--</b><small>%</small></div><figcaption>Battery</figcaption></figure>
         <figure class="ring" id="ring-fuel" data-state="ok"><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="trk" cx="60" cy="60" r="50"/><circle class="val" cx="60" cy="60" r="50" transform="rotate(-90 60 60)" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/></svg><div class="num"><b>--</b><small>%</small></div><figcaption>Fuel</figcaption></figure>
       </div>
       <div class="ctas">
-        <button id="ctaDemo" type="button" class="glow-btn">Run scenario</button>
-        <button id="ctaTalk" type="button" class="ghost">Talk to copilot</button>
+        <button id="ctaDemo" type="button">Run demo scenario</button>
+        <button id="ctaTalk" type="button" class="ghost">Ask the assistant</button>
       </div>
-      <a class="scroll-cue" href="#flight" aria-label="Scroll to the flight path"><span></span></a>
+      <p class="latest" id="latest" hidden><span class="kicker">Latest from Artemis</span><br><a id="latestLink" href="https://www.nasa.gov/missions/artemis/" target="_blank" rel="noopener noreferrer"></a></p>
+    </section>
+
+    <section id="news" aria-label="Mission news">
+      <div class="sec-head reveal">
+        <div><span class="kicker">Artemis</span><h2>Mission news</h2></div>
+        <p>Recent stories from NASA's Artemis coverage.</p>
+        <a class="more-link" href="https://www.nasa.gov/missions/artemis/" target="_blank" rel="noopener noreferrer">All Artemis news on nasa.gov<span class="sr"> (opens in a new tab)</span></a>
+      </div>
+      <div class="news-grid" id="newsGrid" aria-live="polite">
+        <div class="story feature skeleton" aria-hidden="true"></div>
+        <div class="story skeleton" aria-hidden="true"></div>
+        <div class="story skeleton" aria-hidden="true"></div>
+        <div class="story skeleton" aria-hidden="true"></div>
+      </div>
+      <p class="news-meta" id="newsMeta"></p>
     </section>
 
     <section id="flight" aria-label="How it works: flight path">
@@ -50,8 +68,8 @@
             <radialGradient id="gMoon" cx="35%" cy="35%"><stop offset="0" stop-color="#f4f4f7"/><stop offset="1" stop-color="#868896"/></radialGradient>
             <radialGradient id="gGlow"><stop offset="0" stop-color="#5b86ff" stop-opacity=".45"/><stop offset="1" stop-color="#5b86ff" stop-opacity="0"/></radialGradient>
           </defs>
-          <g id="earth" class="body" style="transform-origin:150px 420px"><circle cx="150" cy="420" r="150" fill="url(#gGlow)"/><circle cx="150" cy="420" r="84" fill="url(#gEarth)"/></g>
-          <g id="moon" class="body" style="transform-origin:860px 150px"><circle cx="860" cy="150" r="80" fill="url(#gGlow)" opacity=".5"/><circle cx="860" cy="150" r="40" fill="url(#gMoon)"/><circle cx="848" cy="140" r="6" fill="#6f7180" opacity=".5"/><circle cx="872" cy="162" r="9" fill="#6f7180" opacity=".4"/></g>
+          <g id="earth" class="body-obj" style="transform-origin:150px 420px"><circle cx="150" cy="420" r="150" fill="url(#gGlow)"/><circle cx="150" cy="420" r="84" fill="url(#gEarth)"/></g>
+          <g id="moon" class="body-obj" style="transform-origin:860px 150px"><circle cx="860" cy="150" r="80" fill="url(#gGlow)" opacity=".5"/><circle cx="860" cy="150" r="40" fill="url(#gMoon)"/><circle cx="848" cy="140" r="6" fill="#6f7180" opacity=".5"/><circle cx="872" cy="162" r="9" fill="#6f7180" opacity=".4"/></g>
           <path id="track" class="track" d="M150 420 C350 120 640 60 860 150" pathLength="1" style="stroke-dasharray:4 8"/>
           <path id="trackDone" class="done" d="M150 420 C350 120 640 60 860 150" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/>
           <line id="signal" x1="150" y1="420" x2="150" y2="420"/>
@@ -62,9 +80,9 @@
             <path class="hull" d="M-14 -8 L10 -8 L22 0 L10 8 L-14 8Z"/>
           </g>
         </svg>
-        <div class="hud glass" id="hud">
-          <div class="phase-label">Phase <b id="phaseNum">1</b> of 4 · scroll to advance</div>
-          <h2 id="phaseTitle">Nominal operations</h2>
+        <div class="hud" id="hud">
+          <div class="phase-label">Step <b id="phaseNum">1</b> of 4 · scroll to advance</div>
+          <h2 id="phaseTitle">Normal operations</h2>
           <p id="phaseText"></p>
           <div class="chip" id="phaseChip"></div>
           <div class="dots" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
@@ -74,20 +92,20 @@
     </section>
 
     <section id="telemetry" aria-label="Telemetry. Select a card for details.">
-      <div class="sec-head reveal"><h2>Live telemetry</h2><p>Nine streams at 1 Hz. Select a card for its two-minute chart, nominal limits and anomaly points.</p></div>
+      <div class="sec-head reveal"><div><span class="kicker">Spacecraft</span><h2>Telemetry</h2></div><p>Nine readings, updated every second. Select one for its chart and limits.</p></div>
       <div class="group reveal"><h3>Cabin</h3><div class="cards" id="grid-cabin"></div></div>
       <div class="group reveal"><h3>Power</h3><div class="cards" id="grid-power"></div></div>
       <div class="group reveal"><h3>Propulsion</h3><div class="cards" id="grid-propulsion"></div></div>
       <div class="group reveal"><h3>Thermal</h3><div class="cards" id="grid-thermal"></div></div>
     </section>
 
-    <section id="console" aria-label="Copilot console">
-      <div class="sec-head reveal"><h2>Copilot console</h2><p>Type, or press M to talk. Run the scenario to watch detection, announcement and tool calls end to end.</p></div>
+    <section id="console" aria-label="Crew assistant">
+      <div class="sec-head reveal"><div><span class="kicker">Crew</span><h2>Assistant</h2></div><p>Ask by typing or by voice. The assistant reads the current data before it answers, and can also answer questions about the real Artemis missions.</p></div>
       <div class="row reveal">
-        <section class="panel glass" aria-label="Copilot conversation">
-          <h2>Copilot</h2>
+        <section class="panel" aria-label="Conversation">
+          <h2>Conversation</h2>
           <div id="log" role="log" aria-live="polite" tabindex="0">
-            <div class="msg system"><div class="text">Ask by typing or press M to talk. Select a telemetry card for its detail chart, or run the demo scenario.</div></div>
+            <div class="msg system"><div class="text">Type a question or press M to talk. Try "How is the cabin air?" or "What is the latest on Artemis III?"</div></div>
           </div>
           <form id="form">
             <input type="text" id="q" aria-label="Ask the copilot" placeholder="e.g. How is the cabin air?" autocomplete="off" required>
@@ -100,11 +118,11 @@
         </section>
 
         <div class="side">
-          <section class="panel glass" aria-label="Alerts">
+          <section class="panel" aria-label="Alerts">
             <h2>Alerts</h2>
             <div id="alerts"><span class="none">None</span></div>
           </section>
-          <section class="panel glass" aria-label="Demo controls">
+          <section class="panel" aria-label="Demo controls">
             <h2>Demo</h2>
             <div class="demo">
               <button id="demo" type="button">Run scenario</button>
@@ -121,7 +139,10 @@
     </section>
   </main>
 
-  <footer>Simulated telemetry · Gemini function calling · ElevenLabs voices</footer>
+  <footer>
+    <p>Unofficial student project. It is not affiliated with or endorsed by NASA.</p>
+    <p>Telemetry is simulated. News stories and images come from NASA's public Artemis feed and belong to NASA. Answers by Google Gemini; voices by ElevenLabs.</p>
+  </footer>
 
   <dialog id="detail" aria-labelledby="dTitle">
     <div class="dhead">
@@ -585,5 +606,6 @@
     });
   </script>
   <script src="/static/space.js"></script>
+  <script src="/static/news.js"></script>
 </body>
 </html>

@@ -1,5 +1,6 @@
 """Functions Gemini can call. Docstrings and type hints are the tool schema."""
 from app import telemetry as sim
+from app.news import get_news
 
 SYSTEMS = ("cabin", "power", "propulsion", "thermal", "navigation")
 
@@ -88,4 +89,22 @@ def raise_alarm(system: str, message: str, level: str = "warning") -> dict:
     return {"raised": sim.add_alert(level, system, message)}
 
 
-TOOLS = [get_telemetry, get_trend, run_diagnostics, raise_alarm]
+def get_mission_news(topic: str = "") -> dict:
+    """Get recent NASA Artemis news headlines. Use for questions about real missions, not ship telemetry.
+
+    Args:
+        topic: Optional word to filter by, e.g. "Artemis III", "SLS", "crew". Empty returns the latest.
+    """
+    data = get_news()
+    words = topic.lower().split()
+    text = lambda i: i.get("detail") or i["summary"]
+    score = lambda i: sum(w in (i["title"] + " " + text(i)).lower() for w in words)
+    ranked = sorted(data["items"], key=score, reverse=True)  # stable: ties keep newest first
+    return {
+        "source": "NASA Artemis news feed",
+        "possibly_outdated": data.get("stale", False),
+        "items": [{"date": i["date"], "title": i["title"], "text": text(i)} for i in ranked[:5]],
+    }
+
+
+TOOLS = [get_telemetry, get_trend, run_diagnostics, raise_alarm, get_mission_news]
