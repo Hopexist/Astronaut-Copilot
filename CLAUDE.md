@@ -29,6 +29,13 @@ questions with Gemini, speaks answers with ElevenLabs.
 - static/ (frontend): index.html = markup + app logic; space.css = theme; space.js = visual layer (starfield, hero, scroll-driven flight path, reveals)
 - static/vendor/: Anime.js 4.5.0 and Motion 14.10.1 (both MIT), self-hosted so the demo needs no CDN
 
+## Deploy (Vultr, Ubuntu 22.04/24.04, deploy/setup.sh)
+- Pack (from project root): `tar czf copilot.tgz --exclude=.env --exclude=.env.local --exclude=__pycache__ app static data requirements.txt deploy`
+- Copy: `scp copilot.tgz root@<ip>:/tmp/` then on the server `mkdir -p /opt/copilot && tar xzf /tmp/copilot.tgz -C /opt/copilot`
+- Create `/opt/copilot/.env` on the server with GEMINI_API_KEY and ELEVENLABS_API_KEY, then `bash /opt/copilot/deploy/setup.sh [hostname]`
+- Needs HTTPS (mic requires a secure origin); default host is `<ip-with-dashes>.sslip.io`, or pass a real domain pointed at the server
+- One uvicorn worker on purpose (simulator and rate limiter are in-process); `--proxy-headers` keeps the rate limit per visitor behind Caddy
+
 ## Conventions
 - Small functions, type hints, minimal comments
 - Handle API failures gracefully (show text if audio fails)
