@@ -5,35 +5,275 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Astronaut Copilot</title>
   <style>
-    body { font-family: system-ui, sans-serif; background: #0b1020; color: #e6ecff; max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
-    h1 { font-size: 1.4rem; }
+    :root { --bg: #070b16; --panel: #0f1629; --line: #1f2a48; --text: #e6ecff; --dim: #8a97b8;
+            --ok: #3ddc97; --warn: #ffb020; --bad: #ff4d5e; --accent: #4f7cff; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); }
+    header { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; align-items: baseline; padding: .8rem 1rem; border-bottom: 1px solid var(--line); }
+    header h1 { font-size: 1.1rem; margin: 0; letter-spacing: .08em; text-transform: uppercase; }
+    header .meta { color: var(--dim); font-size: .85rem; font-variant-numeric: tabular-nums; }
+    .spacer { flex: 1; }
+    .badge { padding: .15rem .6rem; border-radius: 99px; font-size: .75rem; font-weight: 600; background: #12301f; color: var(--ok); }
+    .badge.bad { background: #3a141a; color: var(--bad); }
+    .badge.off { background: #3a2c10; color: var(--warn); }
+    main { display: grid; gap: 1rem; padding: 1rem; max-width: 1200px; margin: 0 auto; }
+    #banner { display: none; padding: .7rem 1rem; border-radius: 8px; background: #3a141a; border: 1px solid var(--bad); }
+    #banner.show { display: block; }
+    #banner.conn { background: #3a2c10; border-color: var(--warn); }
+    #grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: .75rem; }
+    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: .7rem .8rem; }
+    .card.bad { border-color: var(--bad); box-shadow: 0 0 0 1px var(--bad) inset; }
+    .card .top { display: flex; align-items: center; gap: .45rem; color: var(--dim); font-size: .78rem; }
+    .light { width: .6rem; height: .6rem; border-radius: 50%; background: var(--ok); box-shadow: 0 0 6px var(--ok); }
+    .card.bad .light { background: var(--bad); box-shadow: 0 0 8px var(--bad); animation: pulse 1s infinite; }
+    @keyframes pulse { 50% { opacity: .35; } }
+    .val { font-size: 1.6rem; font-weight: 600; margin: .2rem 0; font-variant-numeric: tabular-nums; }
+    .val small { font-size: .8rem; color: var(--dim); font-weight: 400; margin-left: .2rem; }
+    canvas.spark { width: 100%; height: 38px; display: block; }
+    .row { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+    @media (min-width: 800px) { .row { grid-template-columns: 1.4fr 1fr; } }
+    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: .9rem 1rem; }
+    .panel h2 { font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; color: var(--dim); margin: 0 0 .6rem; }
     form { display: flex; gap: .5rem; }
-    input { flex: 1; padding: .6rem; border-radius: 6px; border: 1px solid #334; background: #141a30; color: inherit; }
-    button { padding: .6rem 1rem; border: 0; border-radius: 6px; background: #4f7cff; color: #fff; cursor: pointer; }
-    #answer { margin-top: 1rem; padding: 1rem; background: #141a30; border-radius: 6px; min-height: 3rem; white-space: pre-wrap; }
-    pre { background: #141a30; padding: 1rem; border-radius: 6px; overflow: auto; font-size: .8rem; }
+    input, select { flex: 1; min-width: 0; padding: .6rem; border-radius: 6px; border: 1px solid var(--line); background: #0a1020; color: inherit; font-size: 1rem; }
+    button { padding: .6rem 1rem; border: 0; border-radius: 6px; background: var(--accent); color: #fff; cursor: pointer; font-size: .95rem; }
+    button.ghost { background: #1b2542; }
+    #answer { margin-top: .8rem; min-height: 3.2rem; white-space: pre-wrap; line-height: 1.45; }
+    #answer.err { color: var(--bad); }
+    canvas#wave { width: 100%; height: 56px; display: block; margin-top: .6rem; }
+    .alert { padding: .4rem 0; border-top: 1px solid var(--line); font-size: .9rem; }
+    .alert:first-of-type { border-top: 0; }
+    .alert b { color: var(--warn); text-transform: uppercase; font-size: .72rem; margin-right: .4rem; }
+    .demo { display: flex; gap: .5rem; margin-top: .8rem; }
+    label.chk { display: flex; gap: .4rem; align-items: center; color: var(--dim); font-size: .85rem; margin-top: .6rem; }
   </style>
 </head>
 <body>
-  <h1>Astronaut Copilot</h1>
-  <form id="form">
-    <input id="q" placeholder="Ask about the mission, e.g. How is the cabin air?" autocomplete="off" required>
-    <button id="mic" type="button" title="Speak">Mic</button>
-    <button type="submit">Ask</button>
-  </form>
-  <div id="answer"></div>
-  <h2>Telemetry</h2>
-  <pre id="telemetry">loading...</pre>
+  <header>
+    <h1>Astronaut Copilot</h1>
+    <span class="meta" id="mission">--</span>
+    <span class="meta">MET <span id="met">--:--:--</span></span>
+    <span class="meta">Crew <span id="crew">-</span></span>
+    <span class="spacer"></span>
+    <span class="badge" id="status">NOMINAL</span>
+  </header>
+
+  <main>
+    <div id="banner" role="alert"></div>
+    <section id="grid" aria-label="Telemetry"></section>
+
+    <div class="row">
+      <section class="panel">
+        <h2>Copilot</h2>
+        <form id="form">
+          <input id="q" placeholder="Ask about the mission, e.g. How is the cabin air?" autocomplete="off" required>
+          <button id="mic" type="button" class="ghost" title="Speak">Mic</button>
+          <button type="submit">Ask</button>
+        </form>
+        <div id="answer"></div>
+        <canvas id="wave"></canvas>
+        <label class="chk"><input type="checkbox" id="announce" checked style="flex:none"> Announce new anomalies by voice</label>
+      </section>
+
+      <section class="panel">
+        <h2>Alerts</h2>
+        <div id="alerts"><span style="color:var(--dim)">None</span></div>
+        <div class="demo">
+          <select id="faultMetric" aria-label="Metric to fault"></select>
+          <button id="fault" class="ghost" type="button">Inject fault</button>
+        </div>
+      </section>
+    </div>
+  </main>
 
   <script>
     const $ = (id) => document.getElementById(id);
 
-    fetch("/api/telemetry").then(r => r.json()).then(t => {
-      $("telemetry").textContent = JSON.stringify(t, null, 2);
-    });
+    const METRICS = {
+      "cabin.o2_percent": ["Cabin O2", "%", 2],
+      "cabin.co2_ppm": ["Cabin CO2", "ppm", 0],
+      "cabin.pressure_kpa": ["Cabin pressure", "kPa", 1],
+      "cabin.temp_c": ["Cabin temp", "°C", 1],
+      "power.battery_percent": ["Battery", "%", 1],
+      "power.solar_output_kw": ["Solar output", "kW", 2],
+      "power.load_kw": ["Power load", "kW", 2],
+      "propulsion.fuel_percent": ["Fuel", "%", 2],
+      "thermal.radiator_temp_c": ["Radiator temp", "°C", 1],
+    };
+    const MAXPTS = 120;
+    const series = {};
+    const cards = {};
 
-    async function ask(question) {
-      $("answer").textContent = "Thinking...";
+    const get = (t, path) => path.split(".").reduce((o, k) => o?.[k], t);
+
+    // ---- build cards
+    for (const [path, [label, unit]] of Object.entries(METRICS)) {
+      series[path] = [];
+      const el = document.createElement("div");
+      el.className = "card";
+      el.innerHTML = `<div class="top"><span class="light"></span>${label}</div>
+        <div class="val"><span class="v">--</span><small>${unit}</small></div>
+        <canvas class="spark"></canvas>`;
+      $("grid").appendChild(el);
+      cards[path] = { el, v: el.querySelector(".v"), cv: el.querySelector("canvas") };
+      const opt = new Option(label, path);
+      $("faultMetric").add(opt);
+    }
+
+    function spark(path, bad) {
+      const { cv } = cards[path];
+      const dpr = window.devicePixelRatio || 1;
+      const w = cv.clientWidth, h = cv.clientHeight;
+      if (cv.width !== w * dpr) { cv.width = w * dpr; cv.height = h * dpr; }
+      const ctx = cv.getContext("2d");
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, w, h);
+      const d = series[path];
+      if (d.length < 2) return;
+      let lo = Math.min(...d), hi = Math.max(...d);
+      if (hi - lo < 1e-9) { lo -= 1; hi += 1; }
+      ctx.beginPath();
+      d.forEach((v, i) => {
+        const x = (i / (MAXPTS - 1)) * w + (w - (d.length - 1) / (MAXPTS - 1) * w);
+        const y = h - 3 - ((v - lo) / (hi - lo)) * (h - 6);
+        i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      });
+      ctx.strokeStyle = bad ? "#ff4d5e" : "#4f7cff";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+
+    // ---- live telemetry
+    let failures = 0;
+    let knownAnomalies = new Set();
+    let lastAnnounce = 0;
+
+    function banner(text, conn) {
+      const b = $("banner");
+      b.textContent = text || "";
+      b.classList.toggle("show", !!text);
+      b.classList.toggle("conn", !!conn);
+    }
+
+    function render(t) {
+      $("mission").textContent = t.mission;
+      $("met").textContent = t.mission_elapsed_time;
+      $("crew").textContent = t.crew;
+      const bad = new Map((t.anomalies || []).map((a) => [a.metric, a]));
+      for (const [path, [, , dec]] of Object.entries(METRICS)) {
+        const v = get(t, path);
+        const s = series[path];
+        s.push(v); if (s.length > MAXPTS) s.shift();
+        cards[path].v.textContent = v.toFixed(dec);
+        cards[path].el.classList.toggle("bad", bad.has(path));
+        spark(path, bad.has(path));
+      }
+      const st = $("status");
+      st.textContent = bad.size ? `${bad.size} ANOMAL${bad.size > 1 ? "IES" : "Y"}` : "NOMINAL";
+      st.classList.toggle("bad", bad.size > 0);
+      st.classList.remove("off");
+      banner(bad.size ? "Anomaly: " + [...bad.values()].map((a) =>
+        `${METRICS[a.metric][0]} ${a.direction} (z=${a.z_score})`).join(", ") : "");
+      $("alerts").innerHTML = (t.alerts || []).map((a) =>
+        `<div class="alert"><b>${a.level}</b>${a.system}: ${a.message}</div>`).join("")
+        || '<span style="color:var(--dim)">None</span>';
+      maybeAnnounce(bad);
+    }
+
+    function maybeAnnounce(bad) {
+      const fresh = [...bad.keys()].filter((m) => !knownAnomalies.has(m));
+      knownAnomalies = new Set(bad.keys());
+      if (!fresh.length || !$("announce").checked || Date.now() - lastAnnounce < 30000) return;
+      lastAnnounce = Date.now();
+      const names = fresh.map((m) => METRICS[m][0]).join(" and ");
+      ask(`Briefly announce the new anomaly in ${names} to the crew.`, true);
+    }
+
+    async function poll() {
+      try {
+        const res = await fetch("/api/telemetry");
+        if (!res.ok) throw new Error(res.status);
+        render(await res.json());
+        failures = 0;
+      } catch (e) {
+        failures++;
+        if (failures >= 3) {
+          banner("Connection to mission server lost. Retrying...", true);
+          $("status").textContent = "OFFLINE";
+          $("status").className = "badge off";
+        }
+      }
+    }
+
+    async function loadHistory() {
+      await Promise.all(Object.keys(METRICS).map(async (path) => {
+        try {
+          const pts = await (await fetch("/api/history/" + path)).json();
+          series[path] = pts.slice(-MAXPTS).map((p) => p.v);
+        } catch (_) {}
+      }));
+    }
+
+    loadHistory().then(() => { poll(); setInterval(poll, 1000); });
+
+    // ---- waveform (reads the actual TTS audio via Web Audio)
+    let audioCtx = null, analyser = null, speaking = false;
+    const wave = $("wave");
+
+    function ensureAudio() {
+      if (audioCtx) { audioCtx.resume(); return; }
+      try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 128;
+        analyser.connect(audioCtx.destination);
+      } catch (_) { audioCtx = null; }
+    }
+
+    function drawWave() {
+      const dpr = window.devicePixelRatio || 1;
+      const w = wave.clientWidth, h = wave.clientHeight;
+      if (wave.width !== w * dpr) { wave.width = w * dpr; wave.height = h * dpr; }
+      const ctx = wave.getContext("2d");
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, w, h);
+      const n = 40, gap = 3, bw = (w - gap * (n - 1)) / n;
+      let data = null;
+      if (speaking && analyser) { data = new Uint8Array(analyser.frequencyBinCount); analyser.getByteFrequencyData(data); }
+      const t = performance.now() / 120;
+      for (let i = 0; i < n; i++) {
+        let amp = 0.04;
+        if (speaking) {
+          amp = data ? data[Math.floor((i / n) * data.length * 0.7)] / 255
+                     : 0.3 + 0.3 * Math.sin(t + i * 0.6);
+        }
+        const bh = Math.max(2, amp * h);
+        ctx.fillStyle = speaking ? "#4f7cff" : "#1f2a48";
+        ctx.fillRect(i * (bw + gap), (h - bh) / 2, bw, bh);
+      }
+      requestAnimationFrame(drawWave);
+    }
+    drawWave();
+
+    function playAudio(b64) {
+      const audio = new Audio("data:audio/mpeg;base64," + b64);
+      try {
+        if (audioCtx && analyser) audioCtx.createMediaElementSource(audio).connect(analyser);
+      } catch (_) {}
+      audio.onplay = () => { speaking = true; };
+      audio.onended = audio.onerror = () => { speaking = false; };
+      audio.play().catch(() => { speaking = false; });
+    }
+
+    // ---- ask
+    function setAnswer(text, isErr) {
+      $("answer").textContent = text;
+      $("answer").classList.toggle("err", !!isErr);
+    }
+
+    async function ask(question, silentIfBusy) {
+      if (silentIfBusy && speaking) return;
+      setAnswer("Thinking...");
       try {
         const res = await fetch("/api/ask", {
           method: "POST",
@@ -41,16 +281,30 @@
           body: JSON.stringify({ question }),
         });
         const data = await res.json();
-        if (data.error) { $("answer").textContent = data.error; return; }
-        $("answer").textContent = data.answer;
-        if (data.audio) new Audio("data:audio/mpeg;base64," + data.audio).play();
+        if (data.error) { setAnswer(data.error, true); return; }
+        setAnswer(data.answer);
+        if (data.audio) playAudio(data.audio);
+        else setAnswer(data.answer + "\n(audio unavailable)");
       } catch (e) {
-        $("answer").textContent = "Request failed: " + e;
+        setAnswer("Request failed: " + e, true);
       }
     }
 
-    $("form").addEventListener("submit", (e) => { e.preventDefault(); ask($("q").value); });
+    $("form").addEventListener("submit", (e) => { e.preventDefault(); ensureAudio(); ask($("q").value); });
 
+    // ---- fault injection (demo)
+    $("fault").addEventListener("click", async () => {
+      ensureAudio();
+      try {
+        await fetch("/api/sim/fault", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ metric: $("faultMetric").value }),
+        });
+      } catch (e) { setAnswer("Fault injection failed: " + e, true); }
+    });
+
+    // ---- voice input (record, then transcribe server-side)
     let recorder = null;
     const setMic = (label, on) => {
       $("mic").textContent = label;
@@ -66,15 +320,15 @@
         stream.getTracks().forEach((t) => t.stop());
         recorder = null;
         setMic("Mic", false);
-        $("answer").textContent = "Transcribing...";
+        setAnswer("Transcribing...");
         try {
           const res = await fetch("/api/transcribe", { method: "POST", body: new Blob(chunks) });
           const data = await res.json();
-          if (data.error || !data.text) { $("answer").textContent = data.error || "Didn't catch that. Try again."; return; }
+          if (data.error || !data.text) { setAnswer(data.error || "Didn't catch that. Try again.", true); return; }
           $("q").value = data.text;
           ask(data.text);
         } catch (e) {
-          $("answer").textContent = "Transcription request failed: " + e;
+          setAnswer("Transcription request failed: " + e, true);
         }
       };
       recorder.start();
@@ -82,11 +336,12 @@
     }
 
     $("mic").addEventListener("click", async () => {
+      ensureAudio();
       if (recorder) { recorder.stop(); return; }
       try { await startRecording(); }
       catch (e) {
         setMic("Mic", false);
-        $("answer").textContent = "Microphone unavailable (" + e.name + "). You can type instead.";
+        setAnswer("Microphone unavailable (" + e.name + "). You can type instead.", true);
       }
     });
   </script>
