@@ -1,26 +1,28 @@
 import json
 import os
-from pathlib import Path
 
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 
+from app.telemetry import snapshot
+
 load_dotenv(".env.local")
 load_dotenv(".env")
 
 MODEL = "gemini-3.1-flash-lite"  # fast; gemini-3.8-flash was ~9s+ per call
-TELEMETRY_PATH = Path(__file__).resolve().parent.parent / "data" / "telemetry.json"
 
 SYSTEM_PROMPT = (
     "You are the onboard copilot of a simulated space mission. Answer the astronaut's "
     "question using only the telemetry provided. Be concise (1-3 sentences), calm, and "
-    "spoken-friendly: no markdown, no bullet lists. Flag any warnings that matter."
+    "spoken-friendly: no markdown, no bullet lists. Flag any warnings that matter. "
+    "If the telemetry lists anomalies (statistical outliers), mention only those, first, and say what they may mean. "
+    "Never invent anomalies that are not in the list."
 )
 
 
 def load_telemetry() -> dict:
-    return json.loads(TELEMETRY_PATH.read_text(encoding="utf-8"))
+    return snapshot()
 
 
 def ask_gemini(question: str) -> str:

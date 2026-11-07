@@ -17,7 +17,9 @@ questions with Gemini, speaks answers with ElevenLabs.
 - Install: `pip install -r requirements.txt`
 
 ## Structure
-- app/main.py (routes), app/gemini.py, app/voice.py, data/telemetry.json
+- app/main.py (routes), app/gemini.py, app/voice.py, app/telemetry.py
+  (live simulator + z-score anomaly detection), data/telemetry.json (baseline)
+- Demo: `POST /api/sim/fault {"metric": "cabin.co2_ppm"}` injects an anomaly
 - static/ (frontend)
 
 ## Conventions
