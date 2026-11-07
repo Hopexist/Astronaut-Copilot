@@ -41,11 +41,24 @@ Astronaut Copilot is a mission console for a simulated Artemis spacecraft (Artem
 ## What we learned
 Grounding matters more than model size: most of our bugs were the assistant filling a gap with something plausible. Giving it complete source text and tests for the edge cases fixed more than prompt wording did.
 
+## How we would have used Vultr
+We planned to host the whole app on a Vultr Cloud Compute instance so judges could open a live link instead of watching a local demo. Vultr's credit activation failed for our promo code (a known issue at events this weekend), so we never created the server and **the app is not deployed**. The deployment is written and committed (`deploy/setup.sh`, with the steps in `CLAUDE.md`), but we have not run it on a real server, so treat it as a plan we prepared, not something we verified.
+
+What it would have done on one small Ubuntu 24.04 instance (1 vCPU, 1 GB):
+- Run the FastAPI app as a system service under its own unprivileged user, restarted automatically if it crashes.
+- Put Caddy in front of it for free automatic HTTPS. This matters because browsers only allow the microphone on secure pages, so a plain `http://` link would have broken the voice demo.
+- Open only ports 22, 80 and 443 in the firewall.
+- Keep the Gemini and ElevenLabs keys in a root-readable file on the server only, never in the repository.
+- Run a single worker on purpose, because the telemetry simulator and the rate limiter live in the process. A proxy setting keeps the rate limit per visitor, so one judge cannot use up the quota for everyone.
+
+With working credits, the next steps on Vultr would have been a managed database for telemetry history and a spend cap on both API keys before sharing the link publicly.
+
 ## What's next
-Real telemetry sources, a time-series database for longer history, vibration analysis for mechanical faults, and a public deployment.
+Real telemetry sources, a time-series database for longer history, vibration analysis for mechanical faults, and running the prepared Vultr deployment as a public link.
 
 ## Known limitations
 - Telemetry is simulated.
+- There is no live link: the Vultr deployment could not be created (see above), so the app runs locally and the demo video shows it.
 - Answers that use tools take about 3 to 9 seconds.
 - Re-injecting a fault while the previous one is still fading can go unflagged, because the baseline has already shifted.
 - The rate limit is per process and keyed on the direct client address, so behind a reverse proxy all visitors would share one bucket.
