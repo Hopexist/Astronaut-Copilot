@@ -187,7 +187,7 @@
       if (!fresh.length || !$("announce").checked || Date.now() - lastAnnounce < 30000) return;
       lastAnnounce = Date.now();
       const names = fresh.map((m) => METRICS[m][0]).join(" and ");
-      ask(`Briefly announce the new anomaly in ${names} to the crew.`, true);
+      ask(`As Mission Control, briefly announce the new anomaly in ${names} to the crew.`, true, "control");
     }
 
     async function poll() {
@@ -272,7 +272,7 @@
       $("answer").classList.toggle("err", !!isErr);
     }
 
-    async function ask(question, silentIfBusy) {
+    async function ask(question, silentIfBusy, voice = "copilot") {
       if (silentIfBusy && speaking) return;
       setAnswer("Thinking...");
       $("tools").textContent = "";
@@ -280,7 +280,7 @@
         const res = await fetch("/api/ask", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ question }),
+          body: JSON.stringify({ question, voice }),
         });
         const data = await res.json();
         if (data.error) { setAnswer(data.error, true); return; }

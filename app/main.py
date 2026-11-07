@@ -31,6 +31,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 class Question(BaseModel):
     question: str
+    voice: str = "copilot"  # or "control" for Mission Control
 
 
 class Fault(BaseModel):
@@ -81,7 +82,7 @@ def ask(body: Question) -> dict:
     except Exception as exc:
         return {"answer": "", "audio": None, "tools": [], "error": f"Gemini failed: {exc}"}
     try:
-        audio = base64.b64encode(speak(answer)).decode()
+        audio = base64.b64encode(speak(answer, body.voice)).decode()
     except Exception:
         audio = None  # show text if audio fails
     return {"answer": answer, "audio": audio, "tools": tools, "error": None}
