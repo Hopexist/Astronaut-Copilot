@@ -28,7 +28,8 @@ questions with Gemini, speaks answers with ElevenLabs.
 - Look and wording: plain mission-control tone, nasa.gov-style flat design, no NASA logo/branding; keep the "unofficial, not affiliated" notices
 - Demo: `POST /api/sim/fault {"metric": "cabin.co2_ppm"}` injects an anomaly
 - static/ (frontend): index.html = markup + app logic; space.css = theme; space.js = visual layer (starfield, hero, scroll-driven flight path, reveals)
-- Backdrop: `#backdrop` in index.html (nebula layers per section, Earth, Moon, ship), driven by space.js section 8 with transforms/opacity only. Watermelon/Cult/Skiper UI are React+Tailwind (not installable here, Skiper partly paid): only their patterns are re-implemented in vanilla with Anime.js and Motion. OS reduce-motion shows a still scene; `localStorage motion=full` (nav button) opts back in
+- static/charts.js: four trend charts under the Telemetry cards (reads window.cockpit series/flags/nominal, no requests of its own)
+- Backdrop: `#backdrop` in index.html (nebula layers per section, Earth, Moon, ship, plus .bd-par depth layers built in space.js at 0.2/0.45/0.9 of scroll speed), driven by space.js section 8 with transforms/opacity only; everything stays behind the page content. Watermelon/Cult/Skiper UI are React+Tailwind (not installable here, Skiper partly paid): only their patterns are re-implemented in vanilla with Anime.js and Motion. OS reduce-motion shows a still scene; `localStorage motion=full` (nav button) opts back in
 - static/vendor/: Anime.js 4.5.0 and Motion 14.10.1 (both MIT), self-hosted so the demo needs no CDN
 
 ## Deploy (Vultr, Ubuntu 22.04/24.04, deploy/setup.sh)

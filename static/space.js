@@ -15,7 +15,7 @@
     const cv = $("stars"), ctx = cv.getContext("2d");
     let W = 0, H = 0, dpr = 1, stars = [];
     const seed = () => {
-      stars = Array.from({ length: Math.round((innerWidth * innerHeight) / 8000) }, () =>
+      stars = Array.from({ length: Math.round((innerWidth * innerHeight) / 6500) }, () =>
         ({ x: Math.random(), y: Math.random(), z: Math.random() * 0.9 + 0.1, p: Math.random() * 6.28 }));
     };
     const resize = () => {
@@ -27,10 +27,10 @@
       const y = scrollY;
       ctx.clearRect(0, 0, W, H);
       for (const s of stars) {
-        const py = (((s.y * H - y * dpr * s.z * 0.25) % H) + H) % H, px = s.x * W;
-        ctx.globalAlpha = (reduce ? 0.6 : 0.4 + 0.35 * Math.sin((t / 1400) * s.z + s.p)) * (0.4 + s.z / 2);
+        const py = (((s.y * H - y * dpr * (0.05 + s.z * s.z * 0.8)) % H) + H) % H, px = s.x * W; // depth: far stars barely move, near ones fly past
+        ctx.globalAlpha = (reduce ? 0.6 : 0.4 + 0.35 * Math.sin((t / 1400) * s.z + s.p)) * (0.5 + s.z / 1.6);
         ctx.fillStyle = "#ffffff";
-        ctx.beginPath(); ctx.arc(px, py, s.z * 1.2 * dpr, 0, 6.283); ctx.fill();
+        ctx.beginPath(); ctx.arc(px, py, (0.4 + s.z * s.z * 2.2) * dpr, 0, 6.283); ctx.fill();
       }
       if (!reduce) requestAnimationFrame(draw);
     }
@@ -161,7 +161,31 @@
     if (secs.some((s) => !s)) return;
     const layers = ids.map((id) => bd.querySelector(`[data-for="${id}"]`));
     const earth = bd.querySelector(".bd-earth"), moon = bd.querySelector(".bd-moon"), ship = bd.querySelector(".bd-ship");
-    let tops = [], bottoms = [], dirty = true, queued = false;
+    let tops = [], bottoms = [], dirty = true, queued = false, builtH = 0, builtVH = 0;
+    // Depth layers behind the content, each moving at its own fraction of the scroll: slow debris, big rocks at the
+    // screen edges, and fast soft glows that read as being close to the camera. All are behind the page, never over data.
+    const LAYERS = [["debris", 0.2, 16], ["rocks", 0.45, 3], ["bokeh", 0.9, 3]].map(([kind, speed, per]) => ({ kind, speed, per, el: bd.querySelector(`.bd-par[data-kind="${kind}"]`) }));
+    const GLOWS = ["rgba(95,130,255,.5)", "rgba(185,163,255,.45)", "rgba(255,138,76,.35)", "rgba(61,220,151,.28)"];
+    function buildLayers() {
+      const sh = document.documentElement.scrollHeight;
+      builtH = sh; builtVH = innerHeight;
+      const small = Math.min(1, innerWidth / 1000);
+      LAYERS.forEach(({ kind, speed, per, el }) => {
+        let a = kind.length * 977; // fixed seed: the same sky every time
+        const rnd = () => (a = (a * 1664525 + 1013904223) >>> 0) / 4294967296;
+        const H = innerHeight + Math.max(0, sh - innerHeight) * speed;
+        el.style.height = H + "px";
+        el.replaceChildren(...Array.from({ length: Math.round((H / innerHeight) * per) }, () => {
+          const i = document.createElement("i"), size = kind === "debris" ? 5 + rnd() * 9 : kind === "rocks" ? (50 + rnd() * 90) * small : (70 + rnd() * 120) * small;
+          const edge = rnd() < 0.5 ? -size * 0.45 - rnd() * 20 : null; // rocks hug the left or right edge
+          i.style.cssText = `top:${(rnd() * H).toFixed(0)}px;width:${size.toFixed(0)}px;height:${(size * (0.7 + rnd() * 0.5)).toFixed(0)}px;` +
+            (kind === "rocks" ? (edge !== null ? `left:${edge.toFixed(0)}px;` : `right:${(-size * 0.45 - rnd() * 20).toFixed(0)}px;`) : `left:${(rnd() * 100).toFixed(1)}vw;`) +
+            (kind === "bokeh" ? `background:${GLOWS[Math.floor(rnd() * GLOWS.length)]};` : "") +
+            `animation-duration:${(30 + rnd() * 60).toFixed(0)}s;animation-delay:${(-rnd() * 60).toFixed(0)}s;`;
+          return i;
+        }));
+      });
+    }
     const smooth = (t) => t * t * (3 - 2 * t);
     const measure = () => {
       tops = secs.map((s) => s.getBoundingClientRect().top + scrollY);
@@ -172,7 +196,11 @@
 
     function frame() {
       queued = false;
-      if (dirty) measure();
+      if (dirty) {
+        measure();
+        const sh = document.documentElement.scrollHeight;
+        if (!builtH || innerHeight !== builtVH || Math.abs(sh - builtH) > builtH * 0.1) buildLayers();
+      }
       const p = clamp(scrollY / Math.max(1, document.documentElement.scrollHeight - innerHeight));
       const mid = scrollY + innerHeight * 0.5;
       let i = bottoms.findIndex((b) => mid < b);
@@ -184,6 +212,7 @@
         el.style.opacity = w[k].toFixed(3);
         if (!reduce) el.style.transform = `translate3d(0, ${(-p * (60 + k * 25)).toFixed(1)}px, 0)`;
       });
+      LAYERS.forEach(({ speed, el }) => { el.style.transform = reduce ? "none" : `translate3d(0, ${(-scrollY * speed).toFixed(1)}px, 0)`; });
       const q = reduce ? 0.3 : p; // reduced motion: a fixed, still scene instead of one that moves with the scroll
       earth.style.transform = `translate3d(${(-q * 8).toFixed(2)}vw, ${(q * 60).toFixed(1)}vh, 0) scale(${(1 - 0.45 * q).toFixed(3)})`;
       const hand = 1 - w[1]; // the flight section draws its own Earth, Moon and ship, so the backdrop ones fade out there

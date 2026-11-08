@@ -291,20 +291,28 @@ body { background: var(--bg); } /* colour now comes from #backdrop, which change
 /* scroll-driven space backdrop (positions are set from space.js) */
 #backdrop { position: fixed; inset: 0; z-index: -2; overflow: hidden; pointer-events: none; }
 .bd-neb { position: absolute; inset: -12% -6%; opacity: 0; will-change: opacity, transform; }
-.bd-neb[data-for="hero"] { background: radial-gradient(60vw 45vh at 85% 12%, rgba(95, 80, 200, .32), transparent 62%), radial-gradient(50vw 40vh at 4% 45%, rgba(252, 61, 33, .13), transparent 62%); }
-.bd-neb[data-for="flight"] { background: radial-gradient(70vw 50vh at 50% 100%, rgba(252, 61, 33, .22), transparent 62%), radial-gradient(40vw 40vh at 92% 18%, rgba(255, 138, 76, .13), transparent 62%); }
-.bd-neb[data-for="spacecraft"] { background: radial-gradient(60vw 50vh at 12% 20%, rgba(160, 120, 255, .27), transparent 62%), radial-gradient(50vw 40vh at 90% 85%, rgba(60, 120, 230, .18), transparent 62%); }
-.bd-neb[data-for="telemetry"] { background: radial-gradient(60vw 45vh at 88% 25%, rgba(40, 200, 170, .18), transparent 62%), radial-gradient(50vw 45vh at 8% 80%, rgba(60, 120, 230, .18), transparent 62%); }
-.bd-neb[data-for="analysis"] { background: radial-gradient(60vw 45vh at 15% 30%, rgba(255, 176, 32, .15), transparent 62%), radial-gradient(55vw 45vh at 90% 75%, rgba(200, 80, 160, .15), transparent 62%); }
-.bd-neb[data-for="console"] { background: radial-gradient(65vw 50vh at 50% 0%, rgba(79, 141, 232, .24), transparent 62%), radial-gradient(45vw 40vh at 95% 90%, rgba(150, 110, 255, .16), transparent 62%); }
-.bd-neb[data-for="news"] { background: radial-gradient(70vw 50vh at 20% 90%, rgba(110, 90, 220, .24), transparent 62%), radial-gradient(40vw 35vh at 95% 10%, rgba(252, 61, 33, .12), transparent 62%); }
-.bd-earth { position: absolute; left: -16vmax; bottom: -22vmax; width: 44vmax; height: 44vmax; border-radius: 50%; transform-origin: 70% 30%; will-change: transform, opacity;
+.bd-neb[data-for="hero"] { background: radial-gradient(60vw 45vh at 85% 12%, rgba(95, 80, 200, .48), transparent 64%), radial-gradient(50vw 40vh at 4% 45%, rgba(252, 61, 33, .2), transparent 62%); }
+.bd-neb[data-for="flight"] { background: radial-gradient(70vw 50vh at 50% 100%, rgba(252, 61, 33, .34), transparent 64%), radial-gradient(40vw 40vh at 92% 18%, rgba(255, 138, 76, .22), transparent 62%); }
+.bd-neb[data-for="spacecraft"] { background: radial-gradient(60vw 50vh at 12% 20%, rgba(160, 120, 255, .42), transparent 64%), radial-gradient(50vw 40vh at 90% 85%, rgba(60, 120, 230, .3), transparent 62%); }
+.bd-neb[data-for="telemetry"] { background: radial-gradient(60vw 45vh at 88% 25%, rgba(40, 200, 170, .3), transparent 64%), radial-gradient(50vw 45vh at 8% 80%, rgba(60, 120, 230, .3), transparent 62%); }
+.bd-neb[data-for="analysis"] { background: radial-gradient(60vw 45vh at 15% 30%, rgba(255, 176, 32, .26), transparent 64%), radial-gradient(55vw 45vh at 90% 75%, rgba(200, 80, 160, .26), transparent 62%); }
+.bd-neb[data-for="console"] { background: radial-gradient(65vw 50vh at 50% 0%, rgba(79, 141, 232, .4), transparent 64%), radial-gradient(45vw 40vh at 95% 90%, rgba(150, 110, 255, .28), transparent 62%); }
+.bd-neb[data-for="news"] { background: radial-gradient(70vw 50vh at 20% 90%, rgba(110, 90, 220, .4), transparent 64%), radial-gradient(40vw 35vh at 95% 10%, rgba(252, 61, 33, .2), transparent 62%); }
+.bd-earth { position: absolute; left: -18vmax; bottom: -22vmax; width: 54vmax; height: 54vmax; border-radius: 50%; transform-origin: 70% 30%; will-change: transform, opacity;
   background: radial-gradient(circle at 68% 28%, #8fbaff 0, #2f62d6 26%, #0d2a6b 56%, #030b24 82%); box-shadow: 0 0 6vmax 1vmax rgba(80, 130, 255, .22), inset -3vmax -3vmax 6vmax rgba(0, 0, 20, .8); }
 .bd-earth i { position: absolute; inset: -1.2%; border-radius: 50%; border: 2px solid rgba(140, 190, 255, .35); filter: blur(2px); }
-.bd-moon { position: absolute; right: 7vw; top: 9vh; width: 20vmin; height: 20vmin; border-radius: 50%; will-change: transform, opacity;
+.bd-moon { position: absolute; right: 6vw; top: 8vh; width: 26vmin; height: 26vmin; border-radius: 50%; will-change: transform, opacity;
   background: radial-gradient(circle at 18% 22%, rgba(110, 112, 128, .5) 0 6%, transparent 7%), radial-gradient(circle at 62% 58%, rgba(110, 112, 128, .4) 0 9%, transparent 10%), radial-gradient(circle at 35% 30%, #f4f4f7, #a2a4b4 55%, #5d5f70);
   box-shadow: inset -2vmin -2vmin 4vmin rgba(0, 0, 20, .55), 0 0 5vmin rgba(220, 225, 255, .16); }
 .bd-ship { position: absolute; left: 0; top: 0; width: clamp(96px, 11vw, 160px); margin: -2vw 0 0 -5vw; will-change: transform, opacity; opacity: 0; }
+.bd-par { position: absolute; left: 0; top: 0; width: 100%; will-change: transform; }
+.bd-par i { position: absolute; display: block; animation: tumble linear infinite; }
+.bd-par[data-kind="debris"] i { background: rgba(200, 208, 230, .75); clip-path: polygon(10% 0, 100% 30%, 70% 100%, 0 70%); }
+.bd-par[data-kind="debris"] i:nth-child(3n) { clip-path: polygon(0 20%, 60% 0, 100% 60%, 40% 100%); }
+.bd-par[data-kind="rocks"] i { border-radius: 42% 58% 55% 45% / 48% 42% 58% 52%; opacity: .95;
+  background: radial-gradient(circle at 30% 28%, #9a9fb6, #50546a 45%, #1c1e28 88%); box-shadow: inset -8px -10px 22px rgba(0, 0, 0, .65), 0 0 24px rgba(120, 140, 255, .12); }
+.bd-par[data-kind="bokeh"] i { border-radius: 50%; filter: blur(16px); opacity: .42; }
+@keyframes tumble { to { rotate: 360deg; } }
 .bd-ship svg { display: block; width: 100%; height: auto; overflow: visible; }
 .bd-flame { transform-box: fill-box; transform-origin: 100% 50%; }
 #progress { background: var(--grad); }
@@ -390,7 +398,8 @@ input[type=text], select { border-radius: 10px; border-color: var(--glass-line);
 .card:hover, .card:focus-visible { background: rgba(255, 255, 255, .075); border-color: rgba(255, 255, 255, .38); }
 .card.warn { border-color: var(--warn); }
 .card.bad { border-color: var(--bad); box-shadow: inset 0 0 0 1px var(--bad); }
-.bento .card { display: flex; } .bento .ci { flex: 1; display: flex; flex-direction: column; } .bento canvas.spark { margin-top: auto; }
+.bento .card { display: flex; } .bento .ci { flex: 1; display: flex; flex-direction: column; } .bento canvas.spark { flex: 1; height: 0; min-height: 40px; max-height: 72px; margin-top: .5rem; }
+.g-cabin canvas.spark { max-height: none; } /* the cabin cards sit beside three stacked power cards, so they have room for a bigger chart */
 
 /* news: editorial, at the foot of the page */
 #news { padding-bottom: 5rem; }
@@ -400,6 +409,24 @@ input[type=text], select { border-radius: 10px; border-color: var(--glass-line);
 .story.feature h3 { font-weight: 500; line-height: 1.06; letter-spacing: -.02em; }
 .story.feature .thumb { border-right: 1px solid var(--glass-line); }
 .story .kicker { font-size: .68rem; }
+
+/* telemetry: where each reading sits against its limits, and the trend charts */
+.mbar { position: relative; height: 6px; margin: .55rem 0 .15rem; border-radius: 3px; background: rgba(255, 255, 255, .1); }
+.mbar::before { content: ""; position: absolute; top: 0; bottom: 0; left: 14.286%; right: 14.286%; border-radius: 3px; background: rgba(61, 220, 151, .32); }
+.mbar i { position: absolute; top: -3px; left: var(--pos, 50%); width: 4px; height: 12px; margin-left: -2px; border-radius: 2px; background: #fff; transition: left .6s cubic-bezier(.2, .7, .2, 1), background .2s; }
+.card.warn .mbar i { background: var(--warn); } .card.bad .mbar i { background: var(--bad); }
+.lim { min-height: .9rem; font: 600 .66rem var(--mono); letter-spacing: .02em; color: var(--dim); }
+.sec-sub { max-width: 1180px; margin: 1.8rem auto .8rem; padding: 0 1.2rem; font: 800 .74rem var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--dim); }
+.charts { max-width: 1180px; margin: 0 auto; padding: 0 1.2rem; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 1rem; }
+.chart.c-7 { grid-column: span 7; } .chart.c-5 { grid-column: span 5; }
+.chart-head { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: .5rem .8rem; margin-bottom: .6rem; }
+.chart-head .ph { margin: 0 0 .25rem; }
+.chart-sub { margin: 0; max-width: 36ch; color: var(--dim); font-size: .78rem; }
+.legend { display: flex; flex-wrap: wrap; gap: .4rem .9rem; font: 600 .74rem var(--mono); color: var(--dim); }
+.lg { display: inline-flex; align-items: center; gap: .35rem; }
+.lg i { width: .6rem; height: .6rem; border-radius: 2px; }
+.lg b { color: var(--text); font-variant-numeric: tabular-nums; }
+.chart canvas { display: block; width: 100%; height: 230px; cursor: crosshair; touch-action: pan-y; }
 
 /* analysis */
 #analysis { padding: 3.5rem 0 3rem; border-top: 1px solid var(--glass-line); }
@@ -449,6 +476,7 @@ footer::after { content: "Astronaut Copilot"; content: "Astronaut Copilot" / "";
 
 @media (max-width: 900px) {
   .bento { grid-template-columns: 1fr; }
+  .chart.c-7, .chart.c-5 { grid-column: 1 / -1; }
   .an-split { grid-template-columns: minmax(0, 1fr); } .an-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .bento .group { grid-column: 1 / -1; }
   .bento .cards { grid-template-columns: repeat(2, 1fr); }
@@ -462,6 +490,7 @@ footer::after { content: "Astronaut Copilot"; content: "Astronaut Copilot" / "";
   #nav { gap: .5rem; padding: .3rem .6rem; } .brand, .meta { display: none; }
   #hero::before { display: none; } #hero::after { opacity: .35; }
   #motionBtn { font-size: .62rem; padding: .25rem .55rem; }
+  .charts { padding: 0 .8rem; } .chart canvas { height: 200px; }
   .bento { padding: 0 .8rem; } .bento .group { padding: .8rem; }
   .news-grid { grid-template-columns: 1fr; }
   .cards { grid-template-columns: repeat(2, 1fr); gap: .5rem; } .val { font-size: 1.3rem; }

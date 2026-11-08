@@ -8,6 +8,7 @@ On a long mission nobody can watch nine gauges at once, and a crew member with f
 ## What it does
 Astronaut Copilot is a mission console for a simulated Artemis spacecraft (Artemis Sim-7).
 
+- **Trend charts:** power balance (solar against load), battery and fuel, cabin CO₂ and O₂, and temperatures, with limit lines, anomaly markers and a hover readout; every reading card also shows where it sits against its limits.
 - **Live telemetry:** nine readings (cabin O2, CO2, pressure and temperature; battery, solar output and load; fuel; radiator temperature) update every second with charts and nominal limits.
 - **Problem detection:** each reading is watched for sudden jumps away from its recent pattern. A flagged reading turns red, and Mission Control announces it in a separate voice.
 - **Ask by typing or voice:** the question is transcribed, answered, and spoken back. The assistant calls tools (`get_telemetry`, `get_trend`, `run_diagnostics`, `raise_alarm`, `get_mission_news`) so its answers come from live data, and the page shows which tools each answer used.
