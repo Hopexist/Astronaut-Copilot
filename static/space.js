@@ -70,7 +70,7 @@
 
   /* ---------- 2. hero: plain fade-in (Anime.js) + ring gauges ---------- */
   guard(() => {
-    if (A && !reduce) A.animate(["#hero .eyebrow", "#title", "#hero .tagline", "#hero .rings", "#hero .ctas"], { opacity: [0, 1], translateY: [14, 0], delay: A.stagger(90), duration: 600, ease: "outQuad" });
+    if (A && !reduce && !G) A.animate(["#hero .eyebrow", "#title", "#hero .tagline", "#hero .rings", "#hero .ctas"], { opacity: [0, 1], translateY: [14, 0], delay: A.stagger(90), duration: 600, ease: "outQuad" });
   });
 
   const RINGS = [
@@ -190,7 +190,8 @@
     if (secs.some((s) => !s)) return;
     const layers = ids.map((id) => bd.querySelector(`[data-for="${id}"]`));
     const earth = bd.querySelector(".bd-earth"), moon = bd.querySelector(".bd-moon"), ship = bd.querySelector(".bd-ship");
-    let tops = [], bottoms = [], dirty = true, queued = false, builtH = 0, builtVH = 0;
+    let tops = [], bottoms = [], dirty = true, queued = false, builtH = 0, builtVH = 0, tileW = 1, shipAng = 0;
+    const land = earth.querySelector(".strip.land"), clouds = earth.querySelector(".strip.clouds");
     // Depth layers behind the content, each moving at its own fraction of the scroll: slow debris, big rocks at the
     // screen edges, and fast soft glows that read as being close to the camera. All are behind the page, never over data.
     const LAYERS = [["debris", 0.2, 16], ["rocks", 0.45, 3], ["bokeh", 0.9, 3]].map(([kind, speed, per]) => ({ kind, speed, per, el: bd.querySelector(`.bd-par[data-kind="${kind}"]`) }));
@@ -219,6 +220,7 @@
     const measure = () => {
       tops = secs.map((s) => s.getBoundingClientRect().top + scrollY);
       bottoms = secs.map((s) => s.getBoundingClientRect().bottom + scrollY);
+      tileW = earth.offsetWidth * 2; // one full turn of the planet is two globe widths of surface
       dirty = false;
     };
     const path = (q) => [6 + 84 * q, 66 + 16 * Math.sin(q * Math.PI * 3) - 38 * q]; // ship position in vw, vh
@@ -243,13 +245,18 @@
       });
       LAYERS.forEach(({ speed, el }) => { el.style.transform = reduce ? "none" : `translate3d(0, ${(-scrollY * speed).toFixed(1)}px, 0)`; });
       const q = reduce ? 0.3 : p; // reduced motion: a fixed, still scene instead of one that moves with the scroll
-      earth.style.transform = `translate3d(${(-q * 8).toFixed(2)}vw, ${(q * 60).toFixed(1)}vh, 0) scale(${(1 - 0.45 * q).toFixed(3)})`;
+      earth.style.transform = `translate3d(${(-q * 6).toFixed(2)}vw, ${(q * 30).toFixed(1)}vh, 0) scale(${(1 - 0.28 * q).toFixed(3)})`;
+      // the planet turns as you scroll (about one turn per 6000 px); the clouds drift a little faster than the ground
+      const turn = reduce ? 0 : scrollY / 6000;
+      land.style.transform = `translate3d(${((turn * tileW) % tileW).toFixed(1)}px, 0, 0)`;
+      clouds.style.transform = `translate3d(${((turn * 1.4 * tileW) % tileW).toFixed(1)}px, 0, 0)`;
       const hand = 1 - w[1]; // the flight section draws its own Earth, Moon and ship, so the backdrop ones fade out there
-      earth.style.opacity = ((0.9 - 0.55 * q) * hand).toFixed(3);
+      earth.style.opacity = ((0.95 - 0.35 * q) * hand).toFixed(3);
       moon.style.transform = `translate3d(0, ${(-12 * (1 - q)).toFixed(1)}vh, 0) scale(${(0.35 + q).toFixed(3)})`;
       moon.style.opacity = ((0.15 + 0.75 * q) * hand).toFixed(3);
       const [x, y] = path(q), [x2, y2] = path(Math.min(1, q + 0.01));
       const ang = (Math.atan2(((y2 - y) * innerHeight) / 100, ((x2 - x) * innerWidth) / 100) * 180) / Math.PI;
+      shipAng = ang;
       ship.style.transform = `translate3d(${x.toFixed(2)}vw, ${y.toFixed(2)}vh, 0) rotate(${ang.toFixed(1)}deg)`;
       ship.style.opacity = (0.95 * hand).toFixed(3);
     }
@@ -264,6 +271,25 @@
     if (A && !reduce) { // Anime.js: engine flame and a slow atmosphere pulse (inner elements, so they never fight the scroll transforms)
       A.animate(bd.querySelector(".bd-flame"), { scaleX: [1, 0.55], opacity: [0.95, 0.5], duration: 140, ease: "linear", loop: true, alternate: true });
       A.animate(earth.querySelector("i"), { opacity: [0.55, 1], duration: 3200, ease: "inOutSine", loop: true, alternate: true });
+    }
+
+    if (G && !reduce) { // exhaust: the rocket sheds glowing sparks, and sheds more of them the faster you scroll
+      let last = scrollY, idle = 0;
+      G.ticker.add(() => {
+        const speed = Math.abs(lenis ? lenis.velocity : scrollY - last);
+        last = scrollY;
+        if (+ship.style.opacity < 0.3 || document.hidden || bd.querySelectorAll(".bd-spark").length > 70) return;
+        if (speed < 2 && ++idle % 6) return; // standing still: a slow trickle
+        const n = speed < 2 ? 1 : Math.min(4, Math.ceil(speed / 10));
+        const r = ship.getBoundingClientRect(), dx = Math.cos((shipAng * Math.PI) / 180), dy = Math.sin((shipAng * Math.PI) / 180), tail = ship.offsetWidth * 0.42;
+        for (let k = 0; k < n; k++) {
+          const s = document.createElement("i"), size = 3 + Math.random() * 6, dist = 50 + Math.random() * 110 + speed * 2;
+          s.className = "bd-spark";
+          s.style.cssText = `left:${(r.left + r.width / 2 - dx * tail).toFixed(0)}px;top:${(r.top + r.height / 2 - dy * tail).toFixed(0)}px;width:${size}px;height:${size}px`;
+          bd.appendChild(s);
+          G.to(s, { x: -dx * dist + (Math.random() - 0.5) * 40, y: -dy * dist + (Math.random() - 0.5) * 40, opacity: 0, scale: 0.2, duration: 0.6 + Math.random() * 0.7, ease: "power2.out", onComplete: () => s.remove() });
+        }
+      });
     }
   });
 
@@ -305,6 +331,54 @@
         el.style.setProperty("--my", e.clientY - rects[i].top + "px");
       });
     }, { passive: true });
+  });
+
+  /* ---------- 14. shooting stars: now and then one streaks across the sky behind the page ---------- */
+  guard(() => {
+    const bd = $("backdrop");
+    if (!bd || reduce || !G) return;
+    const launch = () => {
+      if (!document.hidden) {
+        const el = document.createElement("i"), len = 140 + Math.random() * 200, ang = 22 + Math.random() * 22, rad = (ang * Math.PI) / 180;
+        el.className = "bd-meteor";
+        el.style.cssText = `left:${(Math.random() * innerWidth * 0.8).toFixed(0)}px;top:${(Math.random() * innerHeight * 0.45).toFixed(0)}px;width:${len.toFixed(0)}px;rotate:${ang.toFixed(0)}deg`;
+        bd.appendChild(el);
+        const far = len * 3.2;
+        G.timeline({ onComplete: () => el.remove() })
+          .fromTo(el, { x: 0, y: 0, opacity: 0 }, { x: Math.cos(rad) * far * 0.3, y: Math.sin(rad) * far * 0.3, opacity: 1, duration: 0.2, ease: "none" })
+          .to(el, { x: Math.cos(rad) * far, y: Math.sin(rad) * far, opacity: 0, duration: 0.7, ease: "power1.in" });
+      }
+      G.delayedCall(3 + Math.random() * 6, launch);
+    };
+    G.delayedCall(2, launch);
+  });
+
+  /* ---------- 15. hero intro: each piece of the hero arrives in turn ---------- */
+  guard(() => {
+    if (reduce || !G) return;
+    const parts = "#hero .eyebrow, #title, #hero .tagline, #hero .ring, #hero .ctas button, #hero .latest";
+    G.timeline({ defaults: { ease: "power3.out" }, onComplete: () => G.set(parts, { clearProps: "opacity,transform,filter" }) })
+      .from("#hero .eyebrow", { y: 14, opacity: 0, duration: 0.6 })
+      .from("#title", { y: 46, opacity: 0, filter: "blur(14px)", duration: 1 }, "-=0.3")
+      .from("#hero .tagline", { y: 18, opacity: 0, duration: 0.7 }, "-=0.55")
+      .from("#hero .ring", { scale: 0.5, opacity: 0, duration: 0.7, stagger: 0.12, ease: "back.out(1.8)" }, "-=0.4")
+      .from("#hero .ctas button", { y: 22, opacity: 0, duration: 0.6, stagger: 0.1 }, "-=0.45")
+      .from("#hero .latest", { y: 10, opacity: 0, duration: 0.6 }, "-=0.3");
+  });
+
+  /* ---------- 16. news cards rise in one after another, the first time they appear ---------- */
+  guard(() => {
+    if (reduce || !G) return;
+    let done = false;
+    document.addEventListener("news-rendered", () => {
+      if (done) return;
+      done = true;
+      const stories = [...document.querySelectorAll(".story")];
+      G.set(stories, { opacity: 0, y: 50, scale: 0.95 });
+      ScrollTrigger.batch(stories, { start: "top 92%", once: true,
+        onEnter: (batch) => G.to(batch, { opacity: 1, y: 0, scale: 1, duration: 0.8, stagger: 0.12, ease: "power3.out", clearProps: "opacity,transform" }) });
+      setTimeout(() => G.to(stories.filter((s) => +getComputedStyle(s).opacity === 0 && s.getBoundingClientRect().top < innerHeight), { opacity: 1, y: 0, scale: 1, duration: 0.4 }), 6000); // safety net
+    });
   });
 
   /* ---------- 12. scroll-velocity marquee (React Bits style) ----------

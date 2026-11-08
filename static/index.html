@@ -21,18 +21,24 @@
     <div class="bd-neb" data-for="analysis"></div>
     <div class="bd-neb" data-for="console"></div>
     <div class="bd-neb" data-for="news"></div>
-    <div class="bd-earth"><i></i></div>
+    <div class="bd-earth"><div class="globe"><div class="strip land"></div><div class="strip clouds"></div></div><i></i><div class="orbit"><b></b></div></div>
     <div class="bd-moon"></div>
     <div class="bd-par" data-kind="debris"></div>
     <div class="bd-ship">
-      <svg viewBox="0 0 150 50" focusable="false">
-        <defs><linearGradient id="bdTrail" x1="0" x2="1"><stop offset="0" stop-color="#8fb4ff" stop-opacity="0"/><stop offset="1" stop-color="#8fb4ff" stop-opacity=".5"/></linearGradient></defs>
-        <rect x="0" y="23" width="62" height="4" fill="url(#bdTrail)"/>
-        <g class="bd-flame"><path d="M64 25 L50 19 L56 25 L50 31Z" fill="#ffb020"/></g>
-        <rect x="62" y="18" width="30" height="14" rx="2" fill="#d9dde6"/>
-        <rect x="62" y="22" width="30" height="3" fill="#fc3d21"/>
-        <rect x="70" y="2" width="14" height="14" fill="#233a73"/><rect x="70" y="34" width="14" height="14" fill="#233a73"/>
-        <path d="M92 19 L122 23 L122 27 L92 31Z" fill="#f4f5f7"/>
+      <svg viewBox="0 0 300 90" focusable="false">
+        <defs>
+          <linearGradient id="bdTrail" x1="0" x2="1"><stop offset="0" stop-color="#8fb4ff" stop-opacity="0"/><stop offset="1" stop-color="#8fb4ff" stop-opacity=".55"/></linearGradient>
+          <linearGradient id="bdCore" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb066"/><stop offset="1" stop-color="#d9622b"/></linearGradient>
+          <linearGradient id="bdWhite" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#b9bfd0"/></linearGradient>
+        </defs>
+        <rect x="0" y="42" width="112" height="6" fill="url(#bdTrail)"/>
+        <g class="bd-flame"><path d="M112 45 L66 32 L88 45 L66 58Z" fill="#ffb020"/><path d="M112 45 L86 39 L98 45 L86 51Z" fill="#fff3b0"/><path d="M120 24 L94 20 L108 24 L94 28Z" fill="#ff8a4c"/><path d="M120 66 L94 62 L108 66 L94 70Z" fill="#ff8a4c"/></g>
+        <rect x="118" y="17" width="104" height="11" rx="4" fill="url(#bdWhite)"/><path d="M222 17 L248 22.5 L222 28Z" fill="#e9ecf4"/><rect x="190" y="17" width="3" height="11" fill="#fc3d21"/>
+        <rect x="118" y="62" width="104" height="11" rx="4" fill="url(#bdWhite)"/><path d="M222 62 L248 67.5 L222 73Z" fill="#e9ecf4"/><rect x="190" y="62" width="3" height="11" fill="#fc3d21"/>
+        <path d="M114 33 L100 17 L128 33Z" fill="#d9dde6"/><path d="M114 57 L100 73 L128 57Z" fill="#d9dde6"/>
+        <rect x="112" y="33" width="132" height="24" rx="3" fill="url(#bdCore)"/><rect x="150" y="33" width="3" height="24" fill="#8f3a14" opacity=".45"/><rect x="200" y="33" width="3" height="24" fill="#8f3a14" opacity=".45"/>
+        <rect x="244" y="37" width="28" height="16" fill="url(#bdWhite)"/><rect x="248" y="43" width="22" height="4" fill="#fc3d21"/>
+        <path d="M272 37 L296 43 Q301 45 296 47 L272 53Z" fill="#f4f5f7"/>
       </svg>
     </div>
     <div class="bd-par" data-kind="rocks"></div>

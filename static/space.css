@@ -298,13 +298,20 @@ body { background: var(--bg); } /* colour now comes from #backdrop, which change
 .bd-neb[data-for="analysis"] { background: radial-gradient(60vw 45vh at 15% 30%, rgba(255, 176, 32, .26), transparent 64%), radial-gradient(55vw 45vh at 90% 75%, rgba(200, 80, 160, .26), transparent 62%); }
 .bd-neb[data-for="console"] { background: radial-gradient(65vw 50vh at 50% 0%, rgba(79, 141, 232, .4), transparent 64%), radial-gradient(45vw 40vh at 95% 90%, rgba(150, 110, 255, .28), transparent 62%); }
 .bd-neb[data-for="news"] { background: radial-gradient(70vw 50vh at 20% 90%, rgba(110, 90, 220, .4), transparent 64%), radial-gradient(40vw 35vh at 95% 10%, rgba(252, 61, 33, .2), transparent 62%); }
-.bd-earth { position: absolute; left: -18vmax; bottom: -22vmax; width: 54vmax; height: 54vmax; border-radius: 50%; transform-origin: 70% 30%; will-change: transform, opacity;
-  background: radial-gradient(circle at 68% 28%, #8fbaff 0, #2f62d6 26%, #0d2a6b 56%, #030b24 82%); box-shadow: 0 0 6vmax 1vmax rgba(80, 130, 255, .22), inset -3vmax -3vmax 6vmax rgba(0, 0, 20, .8); }
+.bd-earth { position: absolute; left: -18vmax; bottom: -22vmax; width: 54vmax; height: 54vmax; border-radius: 50%; transform-origin: 70% 30%; will-change: transform, opacity; box-shadow: 0 0 6vmax 1vmax rgba(80, 130, 255, .28); }
+.bd-earth .globe { position: absolute; inset: 0; border-radius: 50%; overflow: hidden; background: radial-gradient(circle at 60% 40%, #3b7de0 0, #1f55c4 34%, #0d2a6b 70%, #030b24 100%); }
+.bd-earth .globe::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle at 32% 28%, rgba(255, 255, 255, .28), transparent 42%), radial-gradient(circle at 50% 50%, transparent 50%, rgba(0, 0, 22, .85) 100%); }
+.bd-earth .strip { position: absolute; top: 0; left: -200%; width: 600%; height: 100%; background-repeat: repeat-x; background-size: 33.3333% 100%; will-change: transform; }
+.bd-earth .strip.land { background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 400' preserveAspectRatio='none'%3E%0A%3Cellipse cx='400' cy='-6' rx='430' ry='34' fill='%23f2f6ff' opacity='.9'/%3E%3Cellipse cx='400' cy='406' rx='430' ry='30' fill='%23f2f6ff' opacity='.9'/%3E%0A%3Cpath d='M130 70 Q190 50 215 95 Q230 140 190 170 Q215 210 200 250 Q180 310 150 340 Q125 300 140 255 Q100 215 110 165 Q85 110 130 70Z' fill='%234b9a55'/%3E%0A%3Cpath d='M150 120 Q180 115 185 145 Q170 165 150 150Z' fill='%239a9a4d'/%3E%0A%3Cpath d='M350 100 Q410 70 460 105 Q480 150 445 175 Q470 220 440 270 Q410 320 385 290 Q360 230 370 190 Q330 150 350 100Z' fill='%235aa35c'/%3E%0A%3Cpath d='M385 200 Q420 190 435 225 Q415 262 395 245Z' fill='%23c2a85a'/%3E%0A%3Cpath d='M520 80 Q600 40 700 70 Q760 100 720 150 Q660 175 600 160 Q540 150 520 80Z' fill='%234b9a55'/%3E%0A%3Cpath d='M590 90 Q640 80 665 105 Q630 130 600 118Z' fill='%239a9a4d'/%3E%0A%3Cpath d='M640 245 Q690 230 715 262 Q700 295 655 292 Q630 275 640 245Z' fill='%23b99a55'/%3E%0A%3C/svg%3E"); }
+.bd-earth .strip.clouds { background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 400' preserveAspectRatio='none'%3E%0A%3Cg fill='%23ffffff' opacity='.42'%3E%0A%3Cellipse cx='120' cy='110' rx='90' ry='12'/%3E%3Cellipse cx='260' cy='200' rx='70' ry='9'/%3E%3Cellipse cx='180' cy='300' rx='100' ry='11'/%3E%0A%3Cellipse cx='400' cy='80' rx='80' ry='10'/%3E%3Cellipse cx='470' cy='230' rx='100' ry='12'/%3E%3Cellipse cx='380' cy='330' rx='70' ry='9'/%3E%0A%3Cellipse cx='600' cy='60' rx='90' ry='11'/%3E%3Cellipse cx='690' cy='200' rx='80' ry='10'/%3E%3Cellipse cx='560' cy='320' rx='110' ry='12'/%3E%0A%3C/g%3E%3C/svg%3E"); }
+.bd-earth .orbit { position: absolute; inset: -9%; border-radius: 50%; animation: orbit 46s linear infinite; pointer-events: none; }
+.bd-earth .orbit b { position: absolute; top: -.6vmax; left: 50%; width: 3.4vmax; height: 1.2vmax; margin-left: -1.7vmax; border-radius: 2px; background: linear-gradient(90deg, #2b4a9a 0 34%, #d7dcec 34% 66%, #2b4a9a 66%); box-shadow: 0 0 .9vmax rgba(150, 190, 255, .8); }
+@keyframes orbit { to { rotate: 360deg; } }
 .bd-earth i { position: absolute; inset: -1.2%; border-radius: 50%; border: 2px solid rgba(140, 190, 255, .35); filter: blur(2px); }
 .bd-moon { position: absolute; right: 6vw; top: 8vh; width: 26vmin; height: 26vmin; border-radius: 50%; will-change: transform, opacity;
   background: radial-gradient(circle at 18% 22%, rgba(110, 112, 128, .5) 0 6%, transparent 7%), radial-gradient(circle at 62% 58%, rgba(110, 112, 128, .4) 0 9%, transparent 10%), radial-gradient(circle at 35% 30%, #f4f4f7, #a2a4b4 55%, #5d5f70);
   box-shadow: inset -2vmin -2vmin 4vmin rgba(0, 0, 20, .55), 0 0 5vmin rgba(220, 225, 255, .16); }
-.bd-ship { position: absolute; left: 0; top: 0; width: clamp(96px, 11vw, 160px); margin: -2vw 0 0 -5vw; will-change: transform, opacity; opacity: 0; }
+.bd-ship { position: absolute; left: 0; top: 0; width: clamp(190px, 23vw, 340px); margin: -4vw 0 0 -11vw; will-change: transform, opacity; opacity: 0; }
 .bd-par { position: absolute; left: 0; top: 0; width: 100%; will-change: transform; }
 .bd-par i { position: absolute; display: block; animation: tumble linear infinite; }
 .bd-par[data-kind="debris"] i { background: rgba(200, 208, 230, .75); clip-path: polygon(10% 0, 100% 30%, 70% 100%, 0 70%); }
@@ -313,6 +320,9 @@ body { background: var(--bg); } /* colour now comes from #backdrop, which change
   background: radial-gradient(circle at 30% 28%, #9a9fb6, #50546a 45%, #1c1e28 88%); box-shadow: inset -8px -10px 22px rgba(0, 0, 0, .65), 0 0 24px rgba(120, 140, 255, .12); }
 .bd-par[data-kind="bokeh"] i { border-radius: 50%; filter: blur(16px); opacity: .42; }
 @keyframes tumble { to { rotate: 360deg; } }
+.bd-meteor { position: absolute; height: 2px; border-radius: 2px; opacity: 0; pointer-events: none; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .95)); }
+.bd-meteor::after { content: ""; position: absolute; right: -2px; top: -2px; width: 6px; height: 6px; border-radius: 50%; background: #fff; box-shadow: 0 0 10px 3px rgba(190, 215, 255, .9); }
+.bd-spark { position: absolute; border-radius: 50%; pointer-events: none; opacity: .9; background: radial-gradient(circle, #fff3b0, #ff8a4c 60%, transparent 72%); }
 .bd-ship svg { display: block; width: 100%; height: auto; overflow: visible; }
 .bd-flame { transform-box: fill-box; transform-origin: 100% 50%; }
 #progress { background: var(--grad); }
