@@ -505,10 +505,14 @@
       const names = fresh.map((m) => METRICS[m][0]).join(" and ");
       addMsg("system", "Anomaly detected: " + fresh.map((m) =>
         `${METRICS[m][0]} ${bad.get(m).direction} (z=${bad.get(m).z_score})`).join(", "));
-      if (!$("announce").checked || Date.now() - lastAnnounce < 30000) return;
+      if (!$("announce").checked || document.hidden || Date.now() - lastAnnounce < 30000) return; // a background tab stays quiet
       lastAnnounce = Date.now();
-      ask(`As Mission Control, in one sentence tell the crew what the new anomaly in ${names} is: the reading, how it deviates, and what to check. Do not raise an alarm.`,
+      const speak = () => ask(`As Mission Control, in one sentence tell the crew what the new anomaly in ${names} is: the reading, how it deviates, and what to check. Do not raise an alarm.`,
           { voice: "control", auto: true });
+      // Every open tab sees the same anomaly, and each would speak it, so the voice doubles. One lock shared by all tabs
+      // of this site lets the first tab to notice speak; the others skip it. The lock is held a few seconds, then released.
+      if (navigator.locks) navigator.locks.request("copilot-announce", { ifAvailable: true }, (lock) => (lock ? (speak(), sleep(8000)) : undefined));
+      else speak();
     }
 
     let polling = false; // a slow server must not stack up requests that all land at once
