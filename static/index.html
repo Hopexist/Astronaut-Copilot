@@ -562,7 +562,7 @@
       ctx.clearRect(0, 0, w, h);
       const n = 40, gap = 3, bw = (w - gap * (n - 1)) / n;
       let data = null;
-      if (speaking && analyser) { data = new Uint8Array(analyser.frequencyBinCount); analyser.getByteFrequencyData(data); }
+      if (speaking && analyser && !(speech.current && speech.current.utter)) { data = new Uint8Array(analyser.frequencyBinCount); analyser.getByteFrequencyData(data); }
       const t = performance.now() / 120;
       for (let i = 0; i < n; i++) {
         let amp = 0.04;
@@ -593,6 +593,16 @@
     function playNext() {
       if (speech.current || !speech.queue.length) { updateSpeaker(); return; }
       const item = speech.queue.shift();
+      if (!item.b64) { // browser voice
+        const u = new SpeechSynthesisUtterance(item.text);
+        u.pitch = item.voice === "control" ? 0.8 : 1.05;
+        const finished = () => { if (speech.current === item) { speech.current = null; playNext(); } };
+        u.onend = u.onerror = finished;
+        item.utter = u; speech.current = item;
+        speechSynthesis.speak(u);
+        updateSpeaker();
+        return;
+      }
       const audio = new Audio("data:audio/mpeg;base64," + item.b64);
       item.audio = audio;
       speech.current = item;
@@ -603,9 +613,9 @@
       updateSpeaker();
     }
 
-    function say(b64, voice, el) {
+    function say(b64, voice, el, text) {
       if (speech.queue.length >= MAX_QUEUED) return;
-      speech.queue.push({ b64, voice, el });
+      speech.queue.push({ b64, voice, el, text });
       playNext();
     }
 
@@ -613,7 +623,8 @@
       speech.queue.length = 0;
       const item = speech.current;
       speech.current = null;
-      if (item) { item.audio.onended = item.audio.onerror = null; item.audio.pause(); }
+      if (item && item.utter) { item.utter.onend = item.utter.onerror = null; speechSynthesis.cancel(); }
+      else if (item) { item.audio.onended = item.audio.onerror = null; item.audio.pause(); }
       updateSpeaker();
     }
     $("stopSpeech").addEventListener("click", stopSpeech);
@@ -642,8 +653,9 @@
           msg.set(why, [], true, retry); return;
         }
         if (data.error) { msg.set(data.error, [], true, retry); return; }
-        msg.set(data.answer + (data.audio ? "" : "\n(audio unavailable)"), data.tools);
-        if (data.audio) say(data.audio, voice, msg.el);
+        const synth = !data.audio && "speechSynthesis" in window; // ElevenLabs failed or ran out of credits: use the browser voice
+        msg.set(data.answer + (data.audio ? "" : synth ? "\n(Voice service unavailable: speaking with your browser's voice.)" : "\n(audio unavailable)"), data.tools);
+        if (data.audio || synth) say(data.audio, voice, msg.el, data.answer);
       } catch (e) {
         msg.set(e.name === "TimeoutError" ? "The assistant took too long to answer. Try again." : "Request failed: " + e, [], true, retry);
       } finally {
