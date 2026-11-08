@@ -476,7 +476,10 @@
           { voice: "control", auto: true });
     }
 
+    let polling = false; // a slow server must not stack up requests that all land at once
     async function poll() {
+      if (polling) return;
+      polling = true;
       try {
         const res = await fetch("/api/telemetry");
         if (!res.ok) throw new Error(res.status);
@@ -489,6 +492,8 @@
           $("status").textContent = "OFFLINE";
           $("status").className = "badge off";
         }
+      } finally {
+        polling = false;
       }
     }
 
@@ -503,6 +508,8 @@
       }));
     }
     loadInitial().then(() => { poll(); setInterval(poll, 1000); });
+    // Browsers slow timers in hidden tabs, so the charts miss points. Reload the history when the tab comes back.
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) loadInitial(); });
 
     // ---- waveform (reads the actual TTS audio via Web Audio)
     let audioCtx = null, analyser = null, speaking = false;
@@ -599,6 +606,7 @@
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ question, voice }),
+          signal: AbortSignal.timeout(45000), // the server may retry Gemini for ~90 s; do not leave the page spinning
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
@@ -609,7 +617,7 @@
         msg.set(data.answer + (data.audio ? "" : "\n(audio unavailable)"), data.tools);
         if (data.audio) say(data.audio, voice, msg.el);
       } catch (e) {
-        msg.set("Request failed: " + e, [], true, retry);
+        msg.set(e.name === "TimeoutError" ? "The assistant took too long to answer. Try again." : "Request failed: " + e, [], true, retry);
       } finally {
         inflight--;
         $("ask").disabled = inflight > 0;

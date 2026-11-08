@@ -1,14 +1,9 @@
 import os
 
-from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 
-from app.telemetry import snapshot
 from app.tools import TOOLS
-
-load_dotenv(".env.local")
-load_dotenv(".env")
 
 MODEL = "gemini-3.1-flash-lite"  # fast; gemini-3.8-flash was ~9s+ per call
 
@@ -26,10 +21,6 @@ SYSTEM_PROMPT = (
     "and say what they may mean; never invent anomalies. Call raise_alarm only for a real "
     "out-of-range or anomalous condition, or when the astronaut asks you to."
 )
-
-
-def load_telemetry() -> dict:
-    return snapshot()
 
 
 def _tool_calls(response: types.GenerateContentResponse) -> list[dict]:

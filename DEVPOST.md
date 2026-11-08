@@ -24,9 +24,9 @@ Astronaut Copilot is a mission console for a simulated Artemis spacecraft (Artem
 - **Voice:** ElevenLabs for speech (two voices: Mission Control and the onboard assistant) and for transcription.
 - **News:** NASA's public Artemis RSS feed, cached for 15 minutes, with a saved copy used if the feed is unreachable. Only nasa.gov links and image hosts are allowed through to the page.
 - **Frontend:** plain HTML, CSS and JavaScript. The 3D spacecraft is drawn by a small renderer we wrote on a 2D canvas (no 3D library). Animations use Anime.js and Motion, both self-hosted so the demo does not depend on a CDN.
-- **Safety limits:** the paid endpoints cap recording size and question length and are rate-limited per client.
+- **Safety limits:** the paid endpoints cap recording size and question length and are rate-limited per client and overall. The anomaly announcement is generated once and shared by every open page, so ten judges watching one fault cost one call, not ten.
 - **Analysis:** plain Python statistics over a 30-minute in-memory history (least-squares slope for drift, counting separate excursions outside limits, a short cache so the page cannot overload the server).
-- **Tests:** 15 automated tests (`python -m unittest discover -s tests`) cover the news filtering, offline behavior, the limits, the detector and the analysis maths. We checked the analysis tests by deliberately breaking the code and confirming they fail.
+- **Tests:** 25 automated tests (`python -m unittest discover -s tests`) cover the news filtering, offline behavior, the limits, the detector, the analysis maths, and that a slow transcription does not freeze the rest of the server. We checked the analysis tests by deliberately breaking the code and confirming they fail.
 
 ## Challenges we ran into
 - **Browser speech recognition failed** in Brave and in embedded browsers, because it depends on a Google service. We replaced it with recording in the browser and transcribing on the server.
@@ -65,7 +65,7 @@ Real telemetry sources, a time-series database for longer history, vibration ana
 - There is no live link: the Vultr deployment could not be created (see above), so the app runs locally and the demo video shows it.
 - Answers that use tools take about 3 to 9 seconds.
 - Re-injecting a fault while the previous one is still fading can go unflagged, because the baseline has already shifted.
-- The rate limit is per process and keyed on the direct client address, so behind a reverse proxy all visitors would share one bucket.
+- The rate limits are per process and in memory. Behind a reverse proxy they only work per visitor if the server runs with `--proxy-headers`, which our deploy script sets.
 - We have not verified the page on phones or in browsers other than Chrome-based ones.
 
 ## Built with

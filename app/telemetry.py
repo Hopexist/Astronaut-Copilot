@@ -125,13 +125,14 @@ def _detect(path: str, value: float, now: float) -> None:
 def inject_fault(path: str, direction: int = 1) -> None:
     if path not in METRICS:
         raise KeyError(path)
-    _bias[path] += direction * FAULT_SIGMAS * METRICS[path][0]
+    size = FAULT_SIGMAS * METRICS[path][0]
+    _bias[path] = max(-size, min(size, _bias[path] + direction * size))  # repeated calls cannot stack past one full fault
     log_event("fault", f"Fault injected on {path} ({'up' if direction > 0 else 'down'})", {"metric": path})
 
 
 def anomalies() -> list[dict]:
     return sorted(
-        ({k: v for k, v in a.items() if k != "detected_at"} for a in _active.values()),
+        ({k: v for k, v in a.items() if k != "detected_at"} for a in list(_active.values())),  # copy: the simulator edits _active
         key=lambda a: -abs(a["z_score"]),
     )
 
@@ -192,7 +193,8 @@ def snapshot() -> dict:
 def samples(path: str, seconds: float) -> list[tuple[float, float]]:
     """(timestamp, value) pairs for one metric over the last `seconds`."""
     cutoff = time.time() - seconds
-    return [(t, v) for t, v in _history[path] if t >= cutoff]
+    # copy first: the simulator appends from another thread, and looping over a live deque can raise
+    return [(t, v) for t, v in list(_history[path]) if t >= cutoff]
 
 
 def history(path: str) -> list[dict]:

@@ -75,8 +75,9 @@
     }
   }
 
+  let visible = false; // poll only while the section is near the screen
   async function load() {
-    if (document.hidden) return;
+    if (document.hidden || !visible) return;
     const minutes = $("anWindow").value;
     try {
       const [a, l] = await Promise.all([fetch("/api/analysis?minutes=" + minutes), fetch("/api/log?limit=8")]);
@@ -94,6 +95,6 @@
   }
 
   $("anWindow").addEventListener("change", load);
-  load();
+  new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; if (visible) load(); }, { rootMargin: "300px 0px" }).observe($("analysis"));
   setInterval(load, 5000);
 })();

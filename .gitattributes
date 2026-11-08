@@ -1,0 +1,2 @@
+# The deploy script runs on Linux: CRLF line endings would break it ("bash\r: bad interpreter")
+*.sh text eol=lf

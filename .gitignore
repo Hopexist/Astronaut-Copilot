@@ -5,3 +5,7 @@
 __pycache__/
 .venv/
 graphify-out/
+# Installed agent skills and local Claude settings: third-party or personal, not part of the project
+.agents/
+.claude/
+skills-lock.json

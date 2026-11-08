@@ -45,9 +45,9 @@ The microphone only works on `localhost` or HTTPS, so use `127.0.0.1` or `localh
 - A space backdrop that changes as you scroll: the nebula colour changes with each section, Earth recedes, the Moon grows, and a spacecraft crosses the sky (it hands over to the flight section's own ship). Cards have a cursor spotlight and section titles reveal word by word. If your system has "reduce motion" on, you get a still version and a nav button to switch the animations on.
 - Only one voice speaks at a time (extra answers wait their turn). The panel shows who is speaking ("Copilot" or "Mission Control"), highlights that message, and has a **Stop speaking** button (also the Escape key). Pressing Mic silences the copilot first so it is not recorded.
 - If Gemini or ElevenLabs fails, the page shows the text (or an error with a Retry button) instead of breaking.
-- Paid endpoints are capped (500-character questions, 2 MB recordings) and rate-limited per visitor.
+- Paid endpoints are capped (500-character questions, 2 MB recordings) and rate-limited per visitor (30 a minute) and overall (300 per 10 minutes), so a public link has a spending ceiling. Mission Control's anomaly announcement is generated once and shared by every open page. Errors from Gemini and ElevenLabs are logged on the server and shown to visitors as short plain messages.
 
-Tests: `python -m unittest discover -s tests -v` (15 tests, no extra packages).
+Tests: `python -m unittest discover -s tests -v` (25 tests, no extra packages).
 
 ## What does not work, or is not done
 

@@ -247,7 +247,6 @@
     const full = document.documentElement.dataset.motion === "full";
     btn.hidden = false;
     btn.textContent = full ? "Reduce motion" : "Enable motion";
-    btn.setAttribute("aria-pressed", full);
     btn.addEventListener("click", () => {
       try { full ? localStorage.removeItem("motion") : localStorage.setItem("motion", "full"); } catch (_) {}
       location.reload();

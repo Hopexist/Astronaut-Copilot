@@ -1,17 +1,21 @@
 """Run from the project root:  python -m unittest discover -s tests -v"""
+import asyncio
 import copy
 import random
 import sys
 import time
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest import mock
+
+import httpx
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from fastapi.testclient import TestClient  # noqa: E402
 
-from app import analysis, main, news, tools  # noqa: E402
+from app import analysis, gemini, main, news, tools  # noqa: E402
 from app import telemetry as sim  # noqa: E402
 
 RSS = """<?xml version="1.0"?>
@@ -63,9 +67,15 @@ class ToolTests(unittest.TestCase):
         self.assertEqual(top, "Artemis II commander named deputy")
 
 
+def reset_limits() -> None:
+    main._hits.clear()
+    main._all_hits.clear()
+    main._announced.clear()
+
+
 class ApiTests(unittest.TestCase):
     def setUp(self):
-        main._hits.clear()
+        reset_limits()
         self.client = TestClient(main.app)
 
     def test_question_length_and_voice_are_validated(self):
@@ -167,7 +177,7 @@ class AnalysisTests(unittest.TestCase):
     def test_events_are_logged_and_served(self):
         sim.inject_fault("cabin.temp_c")
         self.assertEqual(sim.events(1)[0]["kind"], "fault")
-        main._hits.clear()
+        reset_limits()
         client = TestClient(main.app)
         with mock.patch.object(main, "ask_gemini", return_value=("ok", [{"name": "get_analysis", "args": {}}])), mock.patch.object(main, "speak", return_value=b"x"):
             client.post("/api/ask", json={"question": "my secret question"})
@@ -176,6 +186,107 @@ class AnalysisTests(unittest.TestCase):
         self.assertNotIn("secret", newest["message"])  # the log is public, so it must not echo questions
         self.assertEqual(client.get("/api/analysis?minutes=0").status_code, 422)
         self.assertEqual(len(client.get("/api/analysis?minutes=5").json()["metrics"]), 9)
+
+
+class LoopTests(unittest.IsolatedAsyncioTestCase):
+    async def test_transcribing_does_not_block_the_event_loop(self):
+        reset_limits()
+        gaps, last = [], time.monotonic()
+
+        async def ticker():  # stands in for the simulator, which shares the loop
+            nonlocal last
+            while True:
+                await asyncio.sleep(0.02)
+                now = time.monotonic()
+                gaps.append(now - last)
+                last = now
+
+        slow = mock.patch.object(main, "transcribe", side_effect=lambda audio: time.sleep(0.5) or "hi")
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=main.app), base_url="http://test") as client:
+            with slow:
+                await client.post("/api/transcribe", content=b"warm up")  # one-time setup costs must not count
+                gaps.clear()
+                last = time.monotonic()
+                task = asyncio.create_task(ticker())
+                reply = await client.post("/api/transcribe", content=b"audio")
+        await asyncio.sleep(0.1)  # let the ticker record the gap that the request caused, if any
+        task.cancel()
+        self.assertEqual(reply.json()["text"], "hi")
+        self.assertLess(max(gaps), 0.3)  # a blocked loop would show a gap of about 0.5 s
+
+
+class HardeningTests(unittest.TestCase):
+    def setUp(self):
+        reset_limits()
+        self.client = TestClient(main.app)
+        self.addCleanup(lambda: (sim._bias.update({m: 0.0 for m in sim._bias}), sim._active.clear(), sim._alerts.clear()))
+
+    def test_errors_do_not_leak_provider_details(self):
+        with mock.patch.object(main, "transcribe", side_effect=RuntimeError("x-trace-id abc123")):
+            said = self.client.post("/api/transcribe", content=b"a").json()["error"]
+        with mock.patch.object(main, "ask_gemini", side_effect=RuntimeError("secret-detail")):
+            asked = self.client.post("/api/ask", json={"question": "hi"}).json()["error"]
+        self.assertTrue(said and asked)
+        self.assertNotIn("abc123", said)
+        self.assertNotIn("secret", asked)
+
+    def test_empty_answer_is_an_error_not_a_blank_message(self):
+        with mock.patch.object(main, "ask_gemini", return_value=("", [])), mock.patch.object(main, "speak") as speak:
+            reply = self.client.post("/api/ask", json={"question": "hi"}).json()
+        self.assertTrue(reply["error"])
+        speak.assert_not_called()
+
+    def test_mission_control_announcements_are_shared_but_questions_are_not(self):
+        with mock.patch.object(main, "ask_gemini", return_value=("ok", [])) as gem, mock.patch.object(main, "speak", return_value=b"x"):
+            for _ in range(3):
+                self.client.post("/api/ask", json={"question": "new anomaly", "voice": "control"})
+            self.assertEqual(gem.call_count, 1)
+            for _ in range(2):
+                self.client.post("/api/ask", json={"question": "status", "voice": "copilot"})
+            self.assertEqual(gem.call_count, 3)
+
+    def test_fault_route_is_limited_and_overall_cap_applies(self):
+        with mock.patch.object(main, "GLOBAL_LIMIT", 2):
+            codes = [self.client.post("/api/sim/fault", json={"metric": "cabin.temp_c"}).status_code for _ in range(3)]
+        self.assertEqual(codes, [200, 200, 429])
+
+    def test_repeated_faults_do_not_stack(self):
+        sim.inject_fault("cabin.temp_c")
+        one = sim._bias["cabin.temp_c"]
+        sim.inject_fault("cabin.temp_c")
+        sim.inject_fault("cabin.temp_c")
+        self.assertEqual(sim._bias["cabin.temp_c"], one)
+
+
+class ToolLogicTests(unittest.TestCase):
+    def snapshot(self, **changes):
+        snap = copy.deepcopy(sim.snapshot())
+        snap["anomalies"] = []
+        for path, value in changes.items():
+            section, key = path.split("__")
+            snap[section][key] = value
+        return snap
+
+    def test_diagnostics_flags_out_of_range_and_power_deficit(self):
+        with mock.patch.object(tools.sim, "snapshot", return_value=self.snapshot(cabin__co2_ppm=2000, power__solar_output_kw=1.0, power__load_kw=3.0)):
+            found = {f["metric"] for f in tools.run_diagnostics("all")["out_of_range"]}
+        self.assertEqual(found, {"cabin.co2_ppm", "power.margin_kw"})
+
+    def test_diagnostics_is_nominal_for_the_baseline(self):
+        with mock.patch.object(tools.sim, "snapshot", return_value=self.snapshot()):
+            self.assertEqual(tools.run_diagnostics("all")["result"], "ALL_NOMINAL")
+
+    def test_alarm_level_is_coerced(self):
+        self.addCleanup(sim._alerts.clear)
+        self.assertEqual(tools.raise_alarm("cabin", "x", "banana")["raised"]["level"], "warning")
+        self.assertEqual(tools.raise_alarm("cabin", "x", "critical")["raised"]["level"], "critical")
+
+    def test_tool_calls_are_read_from_the_history(self):
+        call = SimpleNamespace(function_call=SimpleNamespace(name="get_trend", args={"metric": "cabin.co2_ppm"}))
+        text = SimpleNamespace(function_call=None)
+        response = SimpleNamespace(automatic_function_calling_history=[SimpleNamespace(parts=[text, call])])
+        self.assertEqual(gemini._tool_calls(response), [{"name": "get_trend", "args": {"metric": "cabin.co2_ppm"}}])
+        self.assertEqual(gemini._tool_calls(SimpleNamespace(automatic_function_calling_history=None)), [])
 
 
 if __name__ == "__main__":

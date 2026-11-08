@@ -1,11 +1,7 @@
 import os
 from io import BytesIO
 
-from dotenv import load_dotenv
 from elevenlabs import ElevenLabs
-
-load_dotenv(".env.local")
-load_dotenv(".env")
 
 VOICES = {
     "control": "onwK4e9ZLuTAKqWW03F9",  # Daniel: steady broadcaster, Mission Control

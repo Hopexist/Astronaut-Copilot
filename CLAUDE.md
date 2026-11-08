@@ -16,7 +16,7 @@ questions with Gemini, speaks answers with ElevenLabs.
 - Run: `uvicorn app.main:app --reload`
 - Install: `pip install -r requirements.txt`
 - Test: `python -m unittest discover -s tests -v` (run from the project root; stdlib only, no pytest)
-- Paid endpoints (/api/ask, /api/transcribe) are capped (500-char question, 2 MB audio) and rate-limited per client in app/main.py
+- Paid endpoints (/api/ask, /api/transcribe) are capped (500-char question, 2 MB audio) and rate-limited per client plus a global cap in app/main.py; voice=control announcements are answered once and shared (30 s); errors are logged server-side, never sent to the page
 
 ## Structure
 - app/main.py (routes), app/gemini.py, app/voice.py, app/telemetry.py
