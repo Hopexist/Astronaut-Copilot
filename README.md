@@ -44,6 +44,7 @@ The microphone only works on `localhost` or HTTPS, so use `127.0.0.1` or `localh
 - Real Artemis news from NASA's RSS feed, with a saved copy used if the feed is unreachable.
 - Telemetry trend charts: power balance (solar against load, green for surplus and red for deficit), battery and fuel, cabin CO₂ and O₂ on two axes, and temperatures. Each has limit lines, red markers where an anomaly was flagged, and a hover readout. Each reading card also has a bar showing where it sits against its limits.
 - A space backdrop that changes as you scroll, with depth layers (far stars, debris, large rocks at the screen edges and soft foreground glows) moving at different speeds, all behind the data: the nebula colour changes with each section, Earth recedes, the Moon grows, and a spacecraft crosses the sky (it hands over to the flight section's own ship). Cards have a cursor spotlight and section titles reveal word by word. If your system has "reduce motion" on, you get a still version and a nav button to switch the animations on.
+- Smooth, inertial scrolling (Lenis) and scroll-triggered motion (GSAP): section titles drop in out of a blur word by word, a banner of outlined text speeds up, reverses and skews with how fast you scroll, the hero buttons lean toward the cursor, and the analysis numbers count up the first time they appear. Chat, tables and dialogs keep native scrolling. All of it is switched off when your system asks for reduced motion, unless you press **Enable motion**.
 - Only one voice speaks at a time (extra answers wait their turn). The panel shows who is speaking ("Copilot" or "Mission Control"), highlights that message, and has a **Stop speaking** button (also the Escape key). Pressing Mic silences the copilot first so it is not recorded.
 - If Gemini or ElevenLabs fails, the page shows the text (or an error with a Retry button) instead of breaking.
 - Paid endpoints are capped (500-character questions, 2 MB recordings) and rate-limited per visitor (30 a minute) and overall (300 per 10 minutes), so a public link has a spending ceiling. Mission Control's anomaly announcement is generated once and shared by every open page. Errors from Gemini and ElevenLabs are logged on the server and shown to visitors as short plain messages.
@@ -64,8 +65,8 @@ Tests: `python -m unittest discover -s tests -v` (25 tests, no extra packages).
 ## Layout
 
 - `app/main.py` routes, `app/gemini.py` assistant, `app/tools.py` function-calling tools, `app/telemetry.py` simulator, detector and mission log, `app/analysis.py` statistics over the history, `app/voice.py` ElevenLabs, `app/news.py` NASA feed.
-- `static/` plain HTML, CSS and JavaScript (no build step). Anime.js and Motion are included under `static/vendor/` (MIT).
+- `static/` plain HTML, CSS and JavaScript (no build step). Anime.js, Motion and Lenis (MIT) and GSAP (its free "no charge" license, see `static/vendor/gsap.LICENSE.md`) are included under `static/vendor/`, so the page needs no CDN.
 - `data/` baseline telemetry and the saved news copy.
 - `deploy/setup.sh` the prepared Vultr setup.
 
-News stories and images belong to NASA. Anime.js and Motion are MIT licensed.
+News stories and images belong to NASA. Anime.js, Motion and Lenis are MIT licensed. GSAP is used under its free "no charge" license.

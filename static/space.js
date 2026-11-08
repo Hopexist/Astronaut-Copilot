@@ -9,6 +9,35 @@
   const A = window.anime && window.anime.animate ? window.anime : null;
   const M = window.Motion && Motion.animate && Motion.scroll && Motion.inView ? Motion : null;
   const guard = (fn) => { try { return fn(); } catch (e) { console.warn("space.js:", e); } };
+  const G = window.gsap && window.ScrollTrigger ? window.gsap : null;
+
+  /* ---------- 0. smooth scrolling: Lenis moves the page, GSAP's ticker drives it ----------
+     Skipped for reduced motion. Nested scrollers (chat log, table, dialog) keep native scrolling. */
+  let lenis = null;
+  guard(() => {
+    if (reduce || !window.Lenis) return;
+    lenis = new Lenis({ lerp: 0.1, stopInertiaOnNavigate: true, respectReducedMotion: false }); // we only get here when motion is allowed (page opt-in covers an OS reduce setting) // scrollers that must stay native carry data-lenis-prevent
+    window.lenis = lenis;
+    document.addEventListener("click", (e) => { // in-page links glide to their section, below the sticky nav
+      const a = e.target.closest && e.target.closest('a[href^="#"]');
+      const target = a && document.getElementById(a.getAttribute("href").slice(1));
+      if (!target || e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey) return;
+      e.preventDefault();
+      lenis.scrollTo(target, { offset: -56 });
+      history.replaceState(null, "", "#" + target.id);
+      target.focus({ preventScroll: true }); // keyboard users land where the link points
+    });
+    if (G) {
+      G.registerPlugin(ScrollTrigger);
+      lenis.on("scroll", ScrollTrigger.update);
+      G.ticker.add((t) => lenis.raf(t * 1000));
+      G.ticker.lagSmoothing(0);
+    } else {
+      const loop = (t) => { lenis.raf(t); requestAnimationFrame(loop); };
+      requestAnimationFrame(loop);
+    }
+  });
+  if (G && !window.Lenis) G.registerPlugin(ScrollTrigger);
 
   /* ---------- 1. starfield: parallax + twinkle + scroll-velocity streaks ---------- */
   guard(() => {
@@ -248,8 +277,15 @@
         return i ? [document.createTextNode(" "), s] : [s];
       }));
     });
-    if (!M || reduce) return;
-    M.inView(".sec-head h2", (h) => {
+    if (reduce) return;
+    if (G) { // blur text: each word drops in out of a blur, one after another
+      document.querySelectorAll(".sec-head h2").forEach((h) => ScrollTrigger.create({
+        trigger: h, start: "top 88%", once: true,
+        onEnter: () => G.fromTo(h.querySelectorAll(".w"), { opacity: 0, y: -22, filter: "blur(10px)" },
+          { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.75, stagger: 0.09, ease: "power3.out", clearProps: "filter" }),
+      }));
+      document.addEventListener("news-rendered", () => ScrollTrigger.refresh());
+    } else if (M) M.inView(".sec-head h2", (h) => {
       M.animate(h.querySelectorAll(".w"), { opacity: [0, 1], y: [28, 0] }, { duration: 0.6, delay: M.stagger(0.07), ease: "easeOut" });
     }, { amount: 0.6 });
     setTimeout(() => document.querySelectorAll(".sec-head h2 .w").forEach((w) => { if (getComputedStyle(w).opacity === "0" && w.getBoundingClientRect().top < innerHeight) w.style.opacity = 1; }), 4000);
@@ -271,6 +307,35 @@
     }, { passive: true });
   });
 
+  /* ---------- 12. scroll-velocity marquee (React Bits style) ----------
+     The band drifts on its own, then speeds up, reverses and skews with how fast and which way you scroll. */
+  guard(() => {
+    const track = document.querySelector(".mq-track");
+    if (!track || reduce || !G) return; // reduced motion: the text just sits there
+    let x = 0, dir = -1;
+    G.ticker.add(() => {
+      const v = lenis ? lenis.velocity : 0, half = track.children[0].offsetWidth;
+      if (Math.abs(v) > 0.2) dir = v > 0 ? -1 : 1;
+      x += dir * (0.7 + Math.min(Math.abs(v), 50) * 0.6);
+      if (x > 0) x -= half;
+      if (x <= -half) x += half;
+      track.style.transform = `translate3d(${x.toFixed(1)}px, 0, 0) skewX(${clamp(-v * 0.25, -10, 10).toFixed(2)}deg)`;
+    });
+  });
+
+  /* ---------- 13. magnetic buttons (React Bits "Magnet"): the hero buttons lean toward the cursor ---------- */
+  guard(() => {
+    if (reduce || !G || !matchMedia("(pointer: fine)").matches) return;
+    document.querySelectorAll(".ctas button").forEach((b) => {
+      const mx = G.quickTo(b, "x", { duration: 0.4, ease: "power3.out" }), my = G.quickTo(b, "y", { duration: 0.4, ease: "power3.out" });
+      b.addEventListener("pointermove", (e) => {
+        const r = b.getBoundingClientRect();
+        mx((e.clientX - r.left - r.width / 2) * 0.25); my((e.clientY - r.top - r.height / 2) * 0.35);
+      });
+      b.addEventListener("pointerleave", () => { mx(0); my(0); });
+    });
+  });
+
   /* ---------- 11. motion switch: only shown when the OS asks for reduced motion ---------- */
   guard(() => {
     const btn = $("motionBtn");
@@ -286,7 +351,7 @@
 
   /* ---------- 7. hero calls to action ---------- */
   guard(() => {
-    const go = () => $("console").scrollIntoView({ behavior: reduce ? "auto" : "smooth" });
+    const go = () => (lenis ? lenis.scrollTo($("console"), { offset: -56 }) : $("console").scrollIntoView({ behavior: reduce ? "auto" : "smooth" }));
     $("ctaDemo").addEventListener("click", () => { go(); setTimeout(() => window.runDemo && window.runDemo(), reduce ? 0 : 800); });
     $("ctaTalk").addEventListener("click", () => { go(); setTimeout(() => $("q").focus({ preventScroll: true }), reduce ? 0 : 800); });
   });

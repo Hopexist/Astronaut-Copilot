@@ -463,6 +463,16 @@ tr[data-status="out_of_range"] .an-dot { background: var(--warn); } tr[data-stat
 .an-bar-track { display: inline-block; width: 64px; height: 6px; margin-right: .5rem; vertical-align: middle; border-radius: 3px; background: rgba(255, 255, 255, .12); overflow: hidden; }
 .an-bar-track i { display: block; height: 100%; background: var(--ok); }
 
+/* Lenis smooth scrolling: it moves the page itself, so native smooth scrolling must be off */
+html.lenis, html.lenis body { height: auto; }
+html.lenis { scroll-behavior: auto !important; }
+.lenis [data-lenis-prevent] { overscroll-behavior: contain; }
+
+/* scroll-velocity marquee band (React Bits style): outlined editorial type that speeds up and skews with the scroll */
+.marquee { overflow: hidden; padding: .8rem 0; border-block: 1px solid var(--glass-line); background: rgba(8, 10, 16, .35); }
+.mq-track { display: flex; width: max-content; will-change: transform; }
+.mq-track span { flex: none; padding-right: 1.5rem; white-space: nowrap; font: 500 clamp(2rem, 6vw, 4.6rem)/1.1 var(--serif); letter-spacing: -.02em; color: transparent; -webkit-text-stroke: 1px rgba(255, 255, 255, .5); }
+
 /* cursor spotlight on glass surfaces (position set from space.js) */
 .panel:hover, .story:hover, .card:hover, .an-tile:hover, .group:hover { background-image: radial-gradient(320px circle at var(--mx, 50%) var(--my, 50%), rgba(255, 255, 255, .085), transparent 70%); }
 #motionBtn { white-space: nowrap; flex: none; }

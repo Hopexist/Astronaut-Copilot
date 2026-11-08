@@ -20,6 +20,14 @@
     return t;
   }
 
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches && document.documentElement.dataset.motion !== "full";
+  let firstRender = true;
+  function countUp(node, to) { // React Bits "Count Up": the first time the numbers appear they run up from zero
+    if (!window.gsap || reduce || to == null) return;
+    const o = { n: 0 };
+    window.gsap.to(o, { n: to, duration: 1.3, ease: "power2.out", onUpdate: () => { node.textContent = fmt(o.n, 0); } });
+  }
+
   function renderTiles(s, minutes, metrics) {
     const health = s.health;
     const worst = metrics.find((m) => m.metric === s.worst);
@@ -30,6 +38,11 @@
       tile("Anomalies", `${s.anomalies_active} now`, `${s.anomalies_in_window} flagged in ${minutes} min`, s.anomalies_active ? "bad" : ""),
       tile("Data analysed", fmt(s.samples, 0), `${span(s.covered_seconds)} of history`),
     );
+    if (firstRender) {
+      firstRender = false;
+      const values = $("anTiles").querySelectorAll(".an-tile-value");
+      countUp(values[0], s.health); countUp(values[3], s.samples);
+    }
   }
 
   function row(r) {

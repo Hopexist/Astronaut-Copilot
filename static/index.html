@@ -44,7 +44,7 @@
 
   <nav id="nav" aria-label="Sections">
     <a class="brand" translate="no" href="#hero">ASTRONAUT COPILOT</a>
-    <div class="links">
+    <div class="links" data-lenis-prevent>
       <a href="#hero" data-s="hero" class="active">Mission</a>
       <a href="#flight" data-s="flight">How it works</a>
       <a href="#spacecraft" data-s="spacecraft">Spacecraft</a>
@@ -76,6 +76,13 @@
       </div>
       <p class="latest" id="latest" hidden><span class="kicker">Latest from Artemis</span><br><a id="latestLink" href="https://www.nasa.gov/missions/artemis/" target="_blank" rel="noopener noreferrer"></a></p>
     </section>
+
+    <div class="marquee" aria-hidden="true">
+      <div class="mq-track">
+        <span>Live telemetry · Voice copilot · Anomaly detection · Mission control · </span>
+        <span>Live telemetry · Voice copilot · Anomaly detection · Mission control · </span>
+      </div>
+    </div>
 
     <section id="flight" aria-label="How it works: flight path">
       <div class="stage" id="stage" data-phase="0">
@@ -151,7 +158,7 @@
         </section>
         <section class="panel an-table-panel" aria-label="Readings">
           <h3 class="ph">Readings</h3>
-          <div class="an-table-wrap">
+          <div class="an-table-wrap" data-lenis-prevent>
             <table class="an-table">
               <thead><tr><th scope="col">Reading</th><th scope="col">Now</th><th scope="col">Min / max</th><th scope="col">Mean ± sd</th><th scope="col">Drift per min</th><th scope="col">Within limits</th><th scope="col">Flags</th></tr></thead>
               <tbody id="anBody"></tbody>
@@ -166,7 +173,7 @@
       <div class="row reveal">
         <section class="panel" aria-label="Conversation">
           <h3 class="ph">Conversation</h3>
-          <div id="log" role="log" aria-live="polite" tabindex="0">
+          <div id="log" data-lenis-prevent role="log" aria-live="polite" tabindex="0">
             <div class="msg system"><div class="text">Type a question or press M to talk. Try “How is the cabin air?” or “What is the latest on Artemis III?”</div></div>
           </div>
           <form id="form">
@@ -231,7 +238,7 @@
     <p>Telemetry is simulated. News stories and images come from NASA's public Artemis feed and belong to NASA. Answers by Google Gemini; voices by ElevenLabs.</p>
   </footer>
 
-  <dialog id="detail" aria-labelledby="dTitle">
+  <dialog id="detail" data-lenis-prevent aria-labelledby="dTitle">
     <div class="dhead">
       <h2 id="dTitle"></h2>
       <button id="dClose" type="button" class="ghost" aria-label="Close details">Close</button>
@@ -248,6 +255,9 @@
 
   <script src="/static/vendor/anime.umd.min.js"></script>
   <script src="/static/vendor/motion.js"></script>
+  <script src="/static/vendor/gsap.min.js"></script>
+  <script src="/static/vendor/ScrollTrigger.min.js"></script>
+  <script src="/static/vendor/lenis.min.js"></script>
   <script>
     const $ = (id) => document.getElementById(id);
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

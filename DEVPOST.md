@@ -24,7 +24,7 @@ Astronaut Copilot is a mission console for a simulated Artemis spacecraft (Artem
 - **Assistant:** Google Gemini with function calling and an automatic retry on temporary overload.
 - **Voice:** ElevenLabs for speech (two voices: Mission Control and the onboard assistant) and for transcription.
 - **News:** NASA's public Artemis RSS feed, cached for 15 minutes, with a saved copy used if the feed is unreachable. Only nasa.gov links and image hosts are allowed through to the page.
-- **Frontend:** plain HTML, CSS and JavaScript. The 3D spacecraft is drawn by a small renderer we wrote on a 2D canvas (no 3D library). Animations use Anime.js and Motion, both self-hosted so the demo does not depend on a CDN.
+- **Frontend:** plain HTML, CSS and JavaScript. The 3D spacecraft is drawn by a small renderer we wrote on a 2D canvas (no 3D library). Animations use Anime.js, Motion, GSAP with ScrollTrigger, and Lenis for smooth scrolling, all self-hosted so the demo does not depend on a CDN. Effects such as the word-by-word blur reveal, the scroll-velocity banner, magnetic buttons and count-up numbers are re-implemented by hand from patterns in React Bits (a React-only library).
 - **Safety limits:** the paid endpoints cap recording size and question length and are rate-limited per client and overall. The anomaly announcement is generated once and shared by every open page, so ten judges watching one fault cost one call, not ten.
 - **Analysis:** plain Python statistics over a 30-minute in-memory history (least-squares slope for drift, counting separate excursions outside limits, a short cache so the page cannot overload the server).
 - **Tests:** 25 automated tests (`python -m unittest discover -s tests`) cover the news filtering, offline behavior, the limits, the detector, the analysis maths, and that a slow transcription does not freeze the rest of the server. We checked the analysis tests by deliberately breaking the code and confirming they fail.
@@ -70,10 +70,10 @@ Real telemetry sources, a time-series database for longer history, vibration ana
 - We have not verified the page on phones or in browsers other than Chrome-based ones.
 
 ## Built with
-Python, FastAPI, Google Gemini (function calling), ElevenLabs (text to speech and speech to text), NASA public Artemis RSS feed, Anime.js, Motion, HTML canvas, JavaScript
+Python, FastAPI, Google Gemini (function calling), ElevenLabs (text to speech and speech to text), NASA public Artemis RSS feed, Anime.js, Motion, GSAP, Lenis, HTML canvas, JavaScript
 
 ## Credits and notice
-This is an unofficial student project. It is not affiliated with or endorsed by NASA. News stories and images come from NASA's public feed and belong to NASA. Anime.js and Motion are MIT licensed.
+This is an unofficial student project. It is not affiliated with or endorsed by NASA. News stories and images come from NASA's public feed and belong to NASA. Anime.js, Motion and Lenis are MIT licensed; GSAP is used under its free "no charge" license.
 
 ## Try it
 - Code: `<GitHub URL>`
