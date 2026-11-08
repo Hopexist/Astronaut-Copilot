@@ -232,11 +232,13 @@
     const SEL = ".panel, .story, .card, .an-tile, .group";
     document.addEventListener("pointermove", (e) => {
       if (e.pointerType !== "mouse" || !e.target.closest) return;
-      for (let el = e.target.closest(SEL); el; el = el.parentElement && el.parentElement.closest(SEL)) {
-        const r = el.getBoundingClientRect();
-        el.style.setProperty("--mx", e.clientX - r.left + "px");
-        el.style.setProperty("--my", e.clientY - r.top + "px");
-      }
+      const els = [];
+      for (let el = e.target.closest(SEL); el; el = el.parentElement && el.parentElement.closest(SEL)) els.push(el);
+      const rects = els.map((el) => el.getBoundingClientRect()); // read everything, then write: no layout thrash
+      els.forEach((el, i) => {
+        el.style.setProperty("--mx", e.clientX - rects[i].left + "px");
+        el.style.setProperty("--my", e.clientY - rects[i].top + "px");
+      });
     }, { passive: true });
   });
 

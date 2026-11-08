@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#04060f">
+  <meta name="theme-color" content="#050608">
   <title>Astronaut Copilot</title>
   <link rel="stylesheet" href="/static/space.css">
   <script>
@@ -12,7 +12,7 @@
   </script>
 </head>
 <body>
-  <a class="skip" href="#hero">Skip to content</a>
+  <a class="skip" href="#main">Skip to content</a>
   <div id="backdrop" aria-hidden="true">
     <div class="bd-neb" data-for="hero"></div>
     <div class="bd-neb" data-for="flight"></div>
@@ -40,7 +40,7 @@
   <div id="strip">Unofficial student project · Not affiliated with NASA</div>
 
   <nav id="nav" aria-label="Sections">
-    <a class="brand" href="#hero">ASTRONAUT COPILOT</a>
+    <a class="brand" translate="no" href="#hero">ASTRONAUT COPILOT</a>
     <div class="links">
       <a href="#hero" data-s="hero" class="active">Mission</a>
       <a href="#flight" data-s="flight">How it works</a>
@@ -57,10 +57,10 @@
   </nav>
   <div id="banner" role="alert"></div>
 
-  <main>
+  <main id="main" tabindex="-1">
     <section id="hero" aria-label="Mission overview">
       <p class="eyebrow"><span id="mission">--</span> · Crew <span id="crew">-</span> · Simulated mission</p>
-      <h1 id="title">Astronaut Copilot</h1>
+      <h1 id="title" translate="no">Astronaut Copilot</h1>
       <p class="tagline">Live spacecraft telemetry and a voice assistant for the crew. All readings on this page are simulated.</p>
       <div class="rings" role="group" aria-label="Key vitals">
         <figure class="ring" id="ring-o2" data-state="ok"><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="trk" cx="60" cy="60" r="50"/><circle class="val" cx="60" cy="60" r="50" transform="rotate(-90 60 60)" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/></svg><div class="num"><b>--</b><small>%</small></div><figcaption>Cabin O2</figcaption></figure>
@@ -113,7 +113,7 @@
           <div class="scrub"><label for="explode">Assembled</label><input type="range" id="explode" min="0" max="100" value="0"><span aria-hidden="true">Exploded</span></div>
         </div>
         <aside class="craft-side panel" aria-label="Component status">
-          <h2>Components <span id="craftSummary" class="craft-summary"></span></h2>
+          <h3 class="ph">Components <span id="craftSummary" class="craft-summary"></span></h3>
           <div class="craft-bar" id="craftBar" role="group" aria-label="Health of each component"></div>
           <div class="craft-legend" id="craftLegend"></div>
           <div class="craft-detail" id="craftDetail"></div>
@@ -141,11 +141,11 @@
       <div class="an-tiles reveal" id="anTiles"></div>
       <div class="an-grid reveal">
         <section class="panel an-split" aria-label="Insights and mission log">
-          <div><h2>Insights</h2><ul class="an-insights" id="anInsights"><li>Loading analysis...</li></ul></div>
-          <div><h2>Mission log</h2><ol class="an-log" id="anLog"></ol></div>
+          <div><h3 class="ph">Insights</h3><ul class="an-insights" id="anInsights"><li>Loading analysis…</li></ul></div>
+          <div><h3 class="ph">Mission log</h3><ol class="an-log" id="anLog"></ol></div>
         </section>
         <section class="panel an-table-panel" aria-label="Readings">
-          <h2>Readings</h2>
+          <h3 class="ph">Readings</h3>
           <div class="an-table-wrap">
             <table class="an-table">
               <thead><tr><th scope="col">Reading</th><th scope="col">Now</th><th scope="col">Min / max</th><th scope="col">Mean ± sd</th><th scope="col">Drift per min</th><th scope="col">Within limits</th><th scope="col">Flags</th></tr></thead>
@@ -160,12 +160,12 @@
       <div class="sec-head reveal"><div><span class="kicker">Crew</span><h2>Assistant</h2></div><p>Ask by typing or by voice. The assistant reads the current data before it answers, and can also answer questions about the real Artemis missions.</p></div>
       <div class="row reveal">
         <section class="panel" aria-label="Conversation">
-          <h2>Conversation</h2>
+          <h3 class="ph">Conversation</h3>
           <div id="log" role="log" aria-live="polite" tabindex="0">
-            <div class="msg system"><div class="text">Type a question or press M to talk. Try "How is the cabin air?" or "What is the latest on Artemis III?"</div></div>
+            <div class="msg system"><div class="text">Type a question or press M to talk. Try “How is the cabin air?” or “What is the latest on Artemis III?”</div></div>
           </div>
           <form id="form">
-            <input type="text" id="q" aria-label="Ask the copilot" placeholder="e.g. How is the cabin air?" autocomplete="off" maxlength="500" required>
+            <input type="text" id="q" aria-label="Ask the copilot" name="question" placeholder="Ask about cabin air, power or Artemis…" autocomplete="off" maxlength="500" required>
             <button id="mic" type="button" class="ghost" aria-pressed="false" title="Speak (M)">Mic</button>
             <button id="ask" type="submit">Ask</button>
           </form>
@@ -186,11 +186,11 @@
 
         <div class="side">
           <section class="panel" aria-label="Alerts">
-            <h2>Alerts</h2>
+            <h3 class="ph">Alerts</h3>
             <div id="alerts"><span class="none">None</span></div>
           </section>
           <section class="panel" aria-label="Demo controls">
-            <h2>Demo</h2>
+            <h3 class="ph">Demo</h3>
             <div class="demo">
               <button id="demo" type="button">Run scenario</button>
               <button id="demoStop" type="button" class="ghost" hidden>Stop</button>
@@ -340,7 +340,7 @@
       const d = series[openPath];
       if (!d.length) return;
       const cur = d[d.length - 1], n = nominal[openPath];
-      $("sCur").textContent = fmt(openPath, cur) + " " + METRICS[openPath][1];
+      $("sCur").textContent = fmt(openPath, cur) + " " + METRICS[openPath][1];
       $("sMin").textContent = fmt(openPath, Math.min(...d));
       $("sMax").textContent = fmt(openPath, Math.max(...d));
       $("sNom").textContent = n ? `${n[0]} to ${n[1]}` : "n/a";
@@ -488,7 +488,7 @@
       } catch (e) {
         failures++;
         if (failures >= 3) {
-          banner("Connection to mission server lost. Retrying...", true);
+          banner("Connection to mission server lost. Retrying…", true);
           $("status").textContent = "OFFLINE";
           $("status").className = "badge off";
         }
@@ -597,7 +597,7 @@
     async function ask(question, { voice = "copilot", auto = false, echo = true } = {}) {
       if (auto && (speaking || inflight)) return;
       if (!auto && echo) addMsg("you", question);
-      const msg = addMsg(voice === "control" ? "control" : "copilot", "Thinking...", true);
+      const msg = addMsg(voice === "control" ? "control" : "copilot", "Thinking…", true);
       inflight++;
       $("ask").disabled = true;
       const retry = auto ? null : () => ask(question, { voice, echo: false });
@@ -712,7 +712,7 @@
         recorder = null;
         setMic("Mic", false);
         if (Date.now() - began < 600 || !chunks.length) { micFail("That was too short. Press Mic, speak, then press Stop."); return; }
-        micStatus("Transcribing...");
+        micStatus("Transcribing…");
         try {
           const res = await fetch("/api/transcribe", { method: "POST", headers: { "Content-Type": type || "application/octet-stream" }, body: new Blob(chunks, { type }) });
           const data = await res.json().catch(() => ({}));
@@ -725,7 +725,7 @@
       };
       recorder.start();
       setMic("Stop", true);
-      micStatus("Listening... press M or Stop when done");
+      micStatus("Listening… press M or Stop when done");
     }
 
     let micStarting = false; // ignores a second press while the browser is still asking for permission

@@ -2,7 +2,7 @@
 (() => {
   const $ = (id) => document.getElementById(id);
   const ARROW = { rising: "↑", falling: "↓", steady: "→", unknown: "·" };
-  const fmt = (v, d = 1) => (v == null ? "–" : Number(v).toLocaleString("en-US", { maximumFractionDigits: d }));
+  const fmt = (v, d = 1) => (v == null ? "–" : Number(v).toLocaleString(undefined, { maximumFractionDigits: d }));
   const clock = (t) => new Date(t * 1000).toLocaleTimeString([], { hour12: false });
   const span = (s) => (s >= 60 ? `${Math.floor(s / 60)} min ${s % 60} s` : `${s} s`);
 
@@ -56,7 +56,7 @@
     const flags = [r.anomalies ? `${r.anomalies} anomal${r.anomalies > 1 ? "ies" : "y"}` : "", r.excursions ? `${r.excursions} out of range` : ""].filter(Boolean).join(", ");
     tr.append(
       name,
-      el("td", "num", `${fmt(r.now, 2)} ${r.unit}`),
+      el("td", "num", `${fmt(r.now, 2)} ${r.unit}`),
       el("td", "num", r.min == null ? "–" : `${fmt(r.min, 2)} / ${fmt(r.max, 2)}`),
       el("td", "num", r.mean == null ? "–" : `${fmt(r.mean, 2)} ± ${fmt(r.std, 2)}`),
       drift, within, el("td", "", flags || "–"),

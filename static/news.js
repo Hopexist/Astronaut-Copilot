@@ -4,7 +4,7 @@
   const NASA_PAGE = "https://www.nasa.gov/missions/artemis/";
   const okLink = (u) => typeof u === "string" && u.startsWith("https://www.nasa.gov/");
   const okImage = (u) => typeof u === "string" && (u.startsWith("https://www.nasa.gov/") || u.startsWith("https://images-assets.nasa.gov/"));
-  const fmtDate = (iso) => (iso ? new Date(iso + "T12:00:00").toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "");
+  const fmtDate = (iso) => (iso ? new Date(iso + "T12:00:00").toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }) : "");
 
   function el(tag, cls, text) {
     const e = document.createElement(tag);
@@ -19,7 +19,7 @@
     const thumb = el("div", "thumb");
     if (okImage(item.image)) {
       const img = new Image();
-      img.alt = ""; img.loading = feature ? "eager" : "lazy"; img.decoding = "async"; img.src = item.image;
+      img.alt = ""; img.loading = "lazy"; img.decoding = "async"; img.src = item.image; // lazy even for the first: news is the last section
       img.onerror = () => img.remove();
       thumb.appendChild(img);
     }
@@ -48,7 +48,7 @@
     }
     items.forEach((it, i) => grid.appendChild(story(it, i === 0)));
     const when = data.fetched ? new Date(data.fetched) : null;
-    const stamp = when ? when.toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "";
+    const stamp = when ? when.toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "";
     meta.textContent = data.stale
       ? `Showing a saved copy${stamp ? " from " + stamp : ""}; the live feed could not be reached.`
       : `Source: NASA Artemis feed. Updated ${stamp}.`;

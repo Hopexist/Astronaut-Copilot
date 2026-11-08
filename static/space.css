@@ -1,6 +1,7 @@
 /* Mission console theme: flat black and white, one red accent, photo-led news, plain labels.
    Styled after the restraint of nasa.gov; it uses no NASA logo or branding. */
 :root {
+  color-scheme: dark; /* dark scrollbars, selects and checkboxes */
   --bg: #050608; --panel: #0e1013; --panel2: #15181c; --line: #2a2d33; --text: #f4f5f7; --dim: #a3a8b3;
   --red: #fc3d21; --ok: #3ddc97; --warn: #ffb020; --bad: #ff5a4a; --accent: #4f8de8; --control: #b9a3ff;
   --nav-h: 56px; --phase: var(--ok);
@@ -10,7 +11,7 @@ html { scroll-behavior: smooth; scroll-padding-top: 90px; }
 body { margin: 0; font-family: "Public Sans", "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif; color: var(--text); background: var(--bg); overflow-x: hidden; line-height: 1.45; }
 #stars { position: fixed; inset: 0; z-index: -1; width: 100%; height: 100%; pointer-events: none; opacity: .75; }
 :focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
-h1, h2, h3 { margin: 0; }
+h1, h2, h3 { margin: 0; text-wrap: balance; }
 a { color: inherit; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .skip { position: absolute; left: .5rem; top: -3rem; z-index: 100; background: #fff; color: #000; padding: .5rem .8rem; }
@@ -41,7 +42,7 @@ section { position: relative; }
 .sec-head p { color: var(--dim); margin: 0; flex: 1 1 280px; max-width: 520px; }
 .kicker { color: var(--red); font-size: .72rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
 .js-motion .reveal { opacity: 0; }
-button { padding: .65rem 1.1rem; border: 2px solid transparent; border-radius: 3px; background: var(--red); color: #fff; cursor: pointer; font: inherit; font-size: .88rem; font-weight: 700; letter-spacing: .03em; }
+button { touch-action: manipulation; padding: .65rem 1.1rem; border: 2px solid transparent; border-radius: 3px; background: var(--red); color: #fff; cursor: pointer; font: inherit; font-size: .88rem; font-weight: 700; letter-spacing: .03em; }
 button:hover:not(:disabled) { background: #ff5a40; }
 button:disabled { opacity: .5; cursor: default; }
 button.ghost { background: transparent; border-color: #5a5f69; color: var(--text); }
@@ -153,8 +154,9 @@ canvas.spark { width: 100%; height: 38px; display: block; }
 .row { max-width: 1180px; margin: 0 auto; padding: 0 1.2rem; display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.2rem; }
 @media (min-width: 860px) { .row { grid-template-columns: 1.5fr 1fr; align-items: start; } }
 .panel { padding: 1.1rem 1.2rem; background: var(--panel); border: 1px solid var(--line); }
-.panel h2 { font-size: .74rem; text-transform: uppercase; letter-spacing: .14em; color: var(--dim); font-weight: 800; margin: 0 0 .8rem; }
+.panel .ph { font-size: .74rem; text-transform: uppercase; letter-spacing: .14em; color: var(--dim); font-weight: 800; margin: 0 0 .8rem; }
 .side { display: grid; gap: 1.2rem; }
+#log, dialog, .an-table-wrap { overscroll-behavior: contain; }
 #log { height: min(46vh, 420px); min-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: .6rem; padding-right: .3rem; }
 .msg { background: var(--panel2); border-left: 3px solid var(--accent); padding: .55rem .75rem; }
 .msg.you { border-left-color: #6b717d; background: transparent; border: 1px solid var(--line); border-left-width: 3px; }
@@ -162,7 +164,7 @@ canvas.spark { width: 100%; height: 38px; display: block; }
 .msg.system { border-left-color: var(--warn); font-size: .88rem; color: #d7c9a3; }
 .msg.err { border-left-color: var(--bad); }
 .msg .who { font-size: .7rem; color: var(--dim); margin-bottom: .15rem; font-variant-numeric: tabular-nums; text-transform: uppercase; letter-spacing: .06em; font-weight: 700; }
-.msg .text { white-space: pre-wrap; }
+.msg .text { white-space: pre-wrap; overflow-wrap: anywhere; }
 .msg.err .text { color: #ff9f94; }
 .msg.pending .text { color: transparent; min-height: 1.1rem; background: #20242a; animation: pulse 1.2s ease-in-out infinite; }
 .steps { list-style: none; margin: .5rem 0 0; padding: .4rem 0 0; border-top: 1px dashed var(--line); font-size: .76rem; color: var(--dim); }
@@ -218,7 +220,7 @@ dl.stats dt { font-size: .68rem; color: var(--dim); text-transform: uppercase; l
 .scrub input::-webkit-slider-thumb { -webkit-appearance: none; width: 4px; height: 26px; background: var(--red); border: 0; border-radius: 0; transition: transform .15s; }
 .scrub input::-moz-range-thumb { width: 4px; height: 26px; background: var(--red); border: 0; border-radius: 0; }
 .scrub input:hover::-webkit-slider-thumb { transform: scaleX(2); }
-.craft-side h2 { display: flex; justify-content: space-between; gap: .6rem; }
+.craft-side .ph { display: flex; justify-content: space-between; gap: .6rem; }
 .craft-summary { color: var(--ok); letter-spacing: .04em; text-transform: none; font-size: .8rem; }
 .craft-summary[data-state="warn"] { color: var(--warn); }
 .craft-bar { display: flex; gap: 3px; height: 14px; margin-bottom: 1rem; }
@@ -313,7 +315,7 @@ body { background: var(--bg); } /* colour now comes from #backdrop, which change
 h1, .sec-head h2, .story h3, .hud h2 { font-family: var(--serif); }
 .brand { font-family: var(--mono); font-size: .78rem; font-weight: 700; }
 .kicker, .strip, .phase-label, .dist, .chip, .meta, .badge, .val, .ring .num b, .d-val, .part-btn .pv, .news-meta,
-.panel h2, .group h3, .eyebrow, .more-link { font-family: var(--mono); }
+.panel .ph, .group h3, .eyebrow, .more-link { font-family: var(--mono); }
 #title { font-weight: 500; letter-spacing: -.035em; line-height: .95; max-width: none; font-size: clamp(2.6rem, 7vw, 5rem); }
 /* compact top: thinner notice and nav, shorter hero */
 #strip { padding: .2rem 1rem; font-size: .64rem; }
