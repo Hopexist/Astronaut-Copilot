@@ -12,7 +12,7 @@ You need Python 3.11 or newer and two API keys (Google Gemini, ElevenLabs).
 pip install -r requirements.txt
 ```
 
-Create a file named `.env` in this folder:
+Copy `.env.example` to a new file named `.env` in this folder and fill in your keys:
 
 ```
 GEMINI_API_KEY=your-gemini-key
