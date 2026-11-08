@@ -76,6 +76,6 @@ Python, FastAPI, Google Gemini (function calling), ElevenLabs (text to speech an
 This is an unofficial student project. It is not affiliated with or endorsed by NASA. News stories and images come from NASA's public feed and belong to NASA. Anime.js, Motion and Lenis are MIT licensed; GSAP is used under its free "no charge" license.
 
 ## Try it
-- Code: `<GitHub URL>`
-- Demo video: `<video URL>`
-- Team: `<names>`
+- Code: `<https://github.com/Hopexist/Astronaut-Copilot>`
+- Demo video: `<https://www.youtube.com/watch?v=lZ6R7C2LUYs>`
+- Team: `<Ethan Huang>`
