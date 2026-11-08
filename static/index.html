@@ -7,8 +7,9 @@
   <title>Astronaut Copilot</title>
   <link rel="stylesheet" href="/static/space.css">
   <script>
-    // The OS "reduce motion" setting is often on by accident (battery saver, remote desktop). The Motion button in the nav lets a visitor opt back in.
-    try { if (localStorage.getItem("motion") === "full") document.documentElement.dataset.motion = "full"; } catch (_) {}
+    // Motion is on by default. The button in the nav switches it off (the choice is remembered), for anyone who finds the movement hard to look at.
+    document.documentElement.dataset.motion = "full";
+    try { if (localStorage.getItem("motion") === "reduced") document.documentElement.dataset.motion = "reduced"; } catch (_) {}
   </script>
 </head>
 <body>
@@ -60,7 +61,7 @@
       <a href="#news" data-s="news">News</a>
     </div>
     <span class="spacer"></span>
-    <button id="motionBtn" type="button" class="ghost mini" hidden title="Your system asks for reduced motion. This turns the page animations on or off.">Enable motion</button>
+    <button id="motionBtn" type="button" class="ghost mini" hidden title="Turn the page animations off or on. Your choice is remembered.">Reduce motion</button>
     <span class="meta">MET <span id="met">--:--:--</span></span>
     <span class="badge" id="status">NOMINAL</span>
   </nav>
@@ -267,7 +268,7 @@
   <script>
     const $ = (id) => document.getElementById(id);
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-    const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches && document.documentElement.dataset.motion !== "full";
+    const reduceMotion = document.documentElement.dataset.motion === "reduced";
     // Anime.js is optional polish: if it failed to load or throws, the UI still works.
     const animate = (targets, params) => {
       if (reduceMotion || !window.anime) return;

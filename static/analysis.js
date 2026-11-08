@@ -20,7 +20,7 @@
     return t;
   }
 
-  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches && document.documentElement.dataset.motion !== "full";
+  const reduce = document.documentElement.dataset.motion === "reduced";
   let firstRender = true;
   function countUp(node, to) { // React Bits "Count Up": the first time the numbers appear they run up from zero
     if (!window.gsap || reduce || to == null) return;

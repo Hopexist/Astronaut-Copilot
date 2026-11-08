@@ -7,7 +7,7 @@
   const { series, flags, METRICS } = cockpit;
   const MAXPTS = 120; // two minutes at one reading a second, same as the cards
   const A = window.anime && window.anime.animate ? window.anime : null;
-  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches && document.documentElement.dataset.motion !== "full";
+  const reduce = document.documentElement.dataset.motion === "reduced";
   const FONT = "11px ui-monospace, Menlo, Consolas, monospace";
 
   const CHARTS = [

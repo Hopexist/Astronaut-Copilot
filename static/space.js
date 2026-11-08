@@ -4,8 +4,7 @@
 (() => {
   const $ = (id) => document.getElementById(id);
   const clamp = (v, lo = 0, hi = 1) => Math.min(hi, Math.max(lo, v));
-  const osReduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const reduce = osReduce && document.documentElement.dataset.motion !== "full";
+  const reduce = document.documentElement.dataset.motion === "reduced"; // set in <head>: full by default, "reduced" only if the visitor chose it
   const A = window.anime && window.anime.animate ? window.anime : null;
   const M = window.Motion && Motion.animate && Motion.scroll && Motion.inView ? Motion : null;
   const guard = (fn) => { try { return fn(); } catch (e) { console.warn("space.js:", e); } };
@@ -16,7 +15,7 @@
   let lenis = null;
   guard(() => {
     if (reduce || !window.Lenis) return;
-    lenis = new Lenis({ lerp: 0.1, stopInertiaOnNavigate: true, respectReducedMotion: false }); // we only get here when motion is allowed (page opt-in covers an OS reduce setting) // scrollers that must stay native carry data-lenis-prevent
+    lenis = new Lenis({ lerp: 0.1, stopInertiaOnNavigate: true, respectReducedMotion: false }); // we only get here when the page's own motion setting allows it, so Lenis must not second-guess it // scrollers that must stay native carry data-lenis-prevent
     window.lenis = lenis;
     document.addEventListener("click", (e) => { // in-page links glide to their section, below the sticky nav
       const a = e.target.closest && e.target.closest('a[href^="#"]');
@@ -410,15 +409,14 @@
     });
   });
 
-  /* ---------- 11. motion switch: only shown when the OS asks for reduced motion ---------- */
+  /* ---------- 11. motion switch: always shown, so anyone who wants a calmer page can have one ---------- */
   guard(() => {
     const btn = $("motionBtn");
-    if (!btn || !osReduce) return;
-    const full = document.documentElement.dataset.motion === "full";
+    if (!btn) return;
     btn.hidden = false;
-    btn.textContent = full ? "Reduce motion" : "Enable motion";
+    btn.textContent = reduce ? "Enable motion" : "Reduce motion";
     btn.addEventListener("click", () => {
-      try { full ? localStorage.removeItem("motion") : localStorage.setItem("motion", "full"); } catch (_) {}
+      try { localStorage.setItem("motion", reduce ? "full" : "reduced"); } catch (_) {}
       location.reload();
     });
   });

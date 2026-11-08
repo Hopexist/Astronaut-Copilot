@@ -517,7 +517,5 @@ footer::after { content: "Astronaut Copilot"; content: "Astronaut Copilot" / "";
   .hud { left: .8rem; right: .8rem; width: auto; padding: .85rem .95rem; } .hud p { font-size: .85rem; margin-bottom: .5rem; } .hud h2 { font-size: 1.1rem; }
   #log { height: 50vh; } #flight { height: 380vh; } #hero { padding-top: 2.5rem; }
 }
-@media (prefers-reduced-motion: reduce) {
-  html:not([data-motion="full"]) { scroll-behavior: auto; }
-  html:not([data-motion="full"]) *, html:not([data-motion="full"]) *::before, html:not([data-motion="full"]) *::after { animation: none !important; transition: none !important; }
-}
+html[data-motion="reduced"] { scroll-behavior: auto; }
+html[data-motion="reduced"] *, html[data-motion="reduced"] *::before, html[data-motion="reduced"] *::after { animation: none !important; transition: none !important; }
